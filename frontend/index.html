@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="VRUM — Làn gió mới của diễn đàn Việt. Nơi kết nối, chia sẻ và tạo nên những cuộc trò chuyện đáng giá." />
-    <meta name="theme-color" content="#f7f4ed" />
+    <meta name="theme-color" content="#f4f4f4" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script>
       (() => {
@@ -16,11 +16,11 @@
             : preference;
           document.documentElement.dataset.theme = theme;
           document.documentElement.style.colorScheme = theme;
-          document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#09090b' : '#f7f4ed';
+          document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#090909' : '#f4f4f4';
         } catch {
           const theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
           document.documentElement.dataset.theme = theme;
-          document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#09090b' : '#f7f4ed';
+          document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#090909' : '#f4f4f4';
         }
       })();
     </script>

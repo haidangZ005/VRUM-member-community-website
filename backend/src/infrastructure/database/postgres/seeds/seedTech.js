@@ -25,6 +25,8 @@ async function seedTech(pool) {
         [category.name, category.description],
       );
       const { rows } = await client.query('SELECT id FROM categories WHERE name = $1', [category.name]);
+      await client.query('UPDATE categories SET avatar_url = $1 WHERE id = $2 AND avatar_url IS NULL',
+        [`/community-icons/${category.name.toLowerCase()}.svg`, rows[0].id]);
       categoryIds.set(category.name, rows[0].id);
     }
 
@@ -34,8 +36,11 @@ async function seedTech(pool) {
       const result = await client.query(
         `INSERT INTO posts (id, author_id, category_id, title, content)
          VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING`,
-        [post.id, users[0].id, categoryIds.get(post.category), post.title, content],
+        [post.id, users[0].id, categoryIds.get(post.category), post.title, post.summary],
       );
+      // Only migrate the exact old seed body; preserve posts edited by a user.
+      await client.query('UPDATE posts SET content = $1 WHERE id = $2 AND author_id = $3 AND content = $4',
+        [post.summary, post.id, users[0].id, content]);
       inserted += result.rowCount;
     }
     await client.query('COMMIT');
@@ -51,7 +56,7 @@ async function seedTech(pool) {
 if (require.main === module) {
   const pool = require('../connection');
   seedTech(pool)
-    .then((count) => console.log(`Đã thêm ${count} bài demo công nghệ trong ThinkPad, Framework và Linux. Không xóa hoặc ghi đè dữ liệu cũ.`))
+    .then((count) => console.log(`Đã thêm ${count} bài demo công nghệ; bổ sung ảnh nhóm và rút gọn bài mẫu chưa chỉnh sửa. Không xóa dữ liệu.`))
     .catch((error) => { console.error(error.message); process.exitCode = 1; })
     .finally(() => pool.end());
 }

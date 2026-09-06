@@ -7,7 +7,7 @@ export async function prepareCommunityAvatar(file) {
     const canvas = document.createElement('canvas');
     canvas.width = canvas.height = 256;
     const context = canvas.getContext('2d');
-    context.fillStyle = '#f7f4ed';
+    context.fillStyle = '#ffffff';
     context.fillRect(0, 0, 256, 256);
     const side = Math.min(bitmap.width, bitmap.height);
     context.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, 256, 256);

@@ -1,6 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { postApi } from '../api/postApi';
+import { useAuthStore } from '../../../store/authStore';
+import { forgetCommunity } from '../../../utils/recentCommunities';
+
+export function useDeleteCategory() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
+  return useMutation({
+    mutationFn: postApi.removeCategory,
+    onSuccess: (_, id) => {
+      forgetCommunity(window.localStorage, `vrum.recentCommunities.${user.id}`, id);
+      navigate('/posts', { replace: true });
+      for (const key of ['categories', 'posts', 'post', 'my-categories']) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
+}
 
 export function usePosts(params) {
   return useQuery({ queryKey: ['posts', params], queryFn: () => postApi.list(params), placeholderData: (previous) => previous });

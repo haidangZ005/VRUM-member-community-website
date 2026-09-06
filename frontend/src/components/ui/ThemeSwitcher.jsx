@@ -28,7 +28,7 @@ export default function ThemeSwitcher({ className = '' }) {
       const theme = resolveTheme(preference, media.matches);
       document.documentElement.dataset.theme = theme;
       document.documentElement.style.colorScheme = theme;
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#09090b' : '#f7f4ed');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#090909' : '#f4f4f4');
     };
     applyTheme();
     media.addEventListener('change', applyTheme);

@@ -11,7 +11,7 @@ test('tech snapshot has unique identities and source links for all three communi
   }
 });
 
-test('seed only inserts missing records, attributes every post and releases the connection', async () => {
+test('seed preserves user edits and keeps provenance outside displayed post bodies', async () => {
   const client = {
     query: jest.fn(async (sql) => {
       if (sql.startsWith('SELECT id, username')) return { rows: [{ id: 'demo-user', username: 'vrum_tech_demo' }] };
@@ -24,9 +24,15 @@ test('seed only inserts missing records, attributes every post and releases the 
   expect(client.query.mock.calls[0][0]).toBe('BEGIN');
   expect(client.query.mock.calls.at(-1)[0]).toBe('COMMIT');
   for (const [sql, params] of client.query.mock.calls) {
-    expect(sql).not.toMatch(/\b(DELETE|UPDATE|TRUNCATE)\b/);
+    expect(sql).not.toMatch(/\b(DELETE|TRUNCATE)\b/);
+    if (sql.startsWith('UPDATE categories')) expect(sql).toContain('AND avatar_url IS NULL');
+    if (sql.startsWith('UPDATE posts')) {
+      expect(sql).toContain('WHERE id = $2 AND author_id = $3 AND content = $4');
+      expect(params[3]).toContain('Nguồn: https://www.reddit.com/');
+      expect(params[0]).toBe(data.posts.find((post) => post.id === params[1]).summary);
+    }
     if (sql.includes('INSERT INTO')) expect(sql).toMatch(/ON CONFLICT \(\w+\) DO NOTHING/);
-    if (sql.includes('INSERT INTO posts')) expect(params[4]).toContain('Nguồn: https://www.reddit.com/');
+    if (sql.includes('INSERT INTO posts')) expect(params[4]).toBe(data.posts.find((post) => post.id === params[0]).summary);
   }
   expect(client.release).toHaveBeenCalledTimes(1);
 });

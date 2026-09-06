@@ -82,7 +82,11 @@ npm run seed:tech --prefix backend
 
 Lệnh này chỉ thêm dữ liệu còn thiếu: chạy lại không nhân đôi bài, không xóa bài cũ, không đổi mật khẩu hay ghi đè nội dung đã sửa. Không cần `DEMO_PASSWORD`. Tài khoản “VRUM · Demo công nghệ” chỉ để trình bày nguồn tổng hợp, có mật khẩu ngẫu nhiên được băm bcrypt và không dùng để đăng nhập thử.
 
-Dữ liệu là các bản tóm lược tiếng Việt từ bài công khai trên Reddit, được tìm qua công cụ tìm kiếm ngày 05/09/2026 (endpoint JSON không tải được). Mỗi bài ghi tên bài gốc và URL nguồn; không sao chép người dùng, ảnh, lượt thích hay bình luận. Đây là snapshot nhỏ để demo, không phải crawler hoặc dữ liệu cập nhật trực tiếp. Danh sách nguồn nằm trong `backend/src/infrastructure/database/postgres/seeds/techData.json`.
+Dữ liệu là các bản tóm lược tiếng Việt từ bài công khai trên Reddit, được tìm qua công cụ tìm kiếm ngày 05/09/2026 (endpoint JSON không tải được). Tên bài gốc và URL nguồn được giữ trong `backend/src/infrastructure/database/postgres/seeds/techData.json`, không chèn vào nội dung hiển thị. Không sao chép danh tính, lượt thích hay bình luận. Đây là snapshot nhỏ để demo, không phải crawler hoặc dữ liệu cập nhật trực tiếp.
+
+Chạy lại seed sẽ bỏ chú thích ở những bài mẫu còn nguyên nội dung cũ và bổ sung ảnh cho nhóm mẫu chưa có ảnh; không ghi đè bài hoặc ảnh đã chỉnh sửa. Ba biểu tượng ThinkPad, Framework, Linux trong `frontend/public/community-icons` là hình minh họa tự tạo, không phải logo chính thức.
+
+Người tạo có nút **Xóa cộng đồng** trong trang cộng đồng, kèm xác nhận. Backend kiểm tra quyền sở hữu; người khác không được xóa. Bài đăng được giữ lại khi xóa nhóm, còn lượt tham gia/yêu thích của nhóm sẽ được gỡ.
 
 Trong giao diện, chọn **Bắt đầu một cộng đồng** để mở cửa sổ tạo ngay trên trang hiện tại, nhập tên/mô tả và xem trước. Nhấn **Hủy**, nút **×** hoặc **Esc** để đóng; tạo thành công sẽ mở cộng đồng vừa tạo.
 

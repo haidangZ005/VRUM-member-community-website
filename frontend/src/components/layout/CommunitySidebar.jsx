@@ -19,6 +19,8 @@ export default function CommunitySidebar({ selectedCategory = null }) {
   useEffect(() => {
     if (selectedCategory?.id) {
       setRecentCommunities(rememberCommunity(window.localStorage, recentKey, { id: selectedCategory.id, name: selectedCategory.name, avatarUrl: selectedCategory.avatarUrl }));
+    } else {
+      setRecentCommunities(readRecentCommunities(window.localStorage, recentKey));
     }
   }, [recentKey, selectedCategory?.id, selectedCategory?.name, selectedCategory?.avatarUrl]);
 
