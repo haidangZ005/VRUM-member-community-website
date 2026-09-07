@@ -54,14 +54,14 @@ export function useCommunityActions() {
   };
 }
 
-export function useCreatePost() {
+export function useCreatePost({ stayOnFeed = false } = {}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: postApi.create,
     onSuccess: (post) => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      navigate(`/posts/${post.id}`);
+      if (!stayOnFeed) navigate(`/posts/${post.id}`);
     },
   });
 }

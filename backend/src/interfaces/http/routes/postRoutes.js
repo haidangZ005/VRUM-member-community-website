@@ -3,6 +3,7 @@ const asyncHandler = require('../../../shared/utils/asyncHandler');
 const validateRequest = require('../middlewares/validateRequest');
 const { createPostSchema, updatePostSchema, createCommentSchema, postIdSchema, categoryIdSchema, listPostsSchema, listCategoriesSchema } = require('../validators/postValidator');
 const { categorySchema } = require('../validators/adminValidator');
+const { updateCommentSchema, commentIdSchema } = require('../validators/postValidator');
 
 function makePostRoutes(controller, authMiddleware) {
   const router = express.Router();
@@ -24,6 +25,8 @@ function makePostRoutes(controller, authMiddleware) {
   router.delete('/:id/like', validateRequest(postIdSchema, 'params'), asyncHandler(controller.unlike));
   router.get('/:id/comments', validateRequest(postIdSchema, 'params'), asyncHandler(controller.listComments));
   router.post('/:id/comments', validateRequest(postIdSchema, 'params'), validateRequest(createCommentSchema), asyncHandler(controller.createComment));
+  router.put('/:id/comments/:commentId', validateRequest(commentIdSchema, 'params'), validateRequest(updateCommentSchema), asyncHandler(controller.updateComment));
+  router.delete('/:id/comments/:commentId', validateRequest(commentIdSchema, 'params'), asyncHandler(controller.deleteComment));
   return router;
 }
 

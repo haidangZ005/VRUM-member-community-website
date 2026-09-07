@@ -19,6 +19,7 @@ class ForgotPassword {
       expiresAt: new Date(Date.now() + 30 * 60 * 1000),
     });
     const resetUrl = `${this.clientUrl}/reset-password?token=${encodeURIComponent(token)}`;
+    console.log(`[DEV] Password reset link for ${email}: ${resetUrl}`);
     await this.emailService.sendPasswordReset({
       email: user.email,
       fullName: user.fullName,

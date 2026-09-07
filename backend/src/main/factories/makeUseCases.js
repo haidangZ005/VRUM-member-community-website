@@ -15,6 +15,7 @@ const DeletePost = require('../../application/use-cases/posts/DeletePost');
 const LikePost = require('../../application/use-cases/posts/LikePost');
 const UnlikePost = require('../../application/use-cases/posts/UnlikePost');
 const CreateComment = require('../../application/use-cases/comments/CreateComment');
+const EditComment = require('../../application/use-cases/comments/EditComment');
 const ListCommentsByPost = require('../../application/use-cases/comments/ListCommentsByPost');
 const ListMembers = require('../../application/use-cases/admin/ListMembers');
 const LockMemberAccount = require('../../application/use-cases/admin/LockMemberAccount');
@@ -51,6 +52,7 @@ function makeUseCases(dependencies) {
     likePost: new LikePost({ postRepository, likeRepository }),
     unlikePost: new UnlikePost({ postRepository, likeRepository }),
     createComment: new CreateComment({ postRepository, commentRepository }),
+    editComment: new EditComment({ postRepository, commentRepository }),
     listCommentsByPost: new ListCommentsByPost({ postRepository, commentRepository }),
     listMembers: new ListMembers({ userRepository }),
     lockMemberAccount: new LockMemberAccount({ userRepository, refreshTokenRepository }),

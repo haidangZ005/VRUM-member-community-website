@@ -35,6 +35,12 @@ function makePostController(useCases, dependencies) {
     async createComment(req, res) {
       return res.status(201).json({ data: await useCases.createComment.execute(req.validatedParams.id, req.user.id, req.validatedBody) });
     },
+    async updateComment(req, res) {
+      return res.json({ data: await useCases.editComment.execute(req.validatedParams.id, req.validatedParams.commentId, req.user.id, req.validatedBody) });
+    },
+    async deleteComment(req, res) {
+      return res.json({ data: await useCases.editComment.execute(req.validatedParams.id, req.validatedParams.commentId, req.user.id, null) });
+    },
     async listCategories(req, res) {
       const { id, search = '', limit, mine, joined, favorites } = req.validatedQuery;
       if (id) {

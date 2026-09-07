@@ -1,5 +1,6 @@
 const ForbiddenError = require('../../../domain/errors/ForbiddenError');
 const NotFoundError = require('../../../domain/errors/NotFoundError');
+const Post = require('../../../domain/entities/Post');
 
 class EditPost {
   constructor({ postRepository, categoryRepository }) {
@@ -14,7 +15,8 @@ class EditPost {
     if (changes.categoryId && !(await this.categoryRepository.findById(changes.categoryId))) {
       throw new NotFoundError('Không tìm thấy chuyên mục');
     }
-    const updated = await this.postRepository.update(id, changes, userId);
+    const validated = new Post({ ...post, ...changes });
+    const updated = await this.postRepository.update(id, { ...changes, images: validated.images }, userId);
     return updated.toJSON();
   }
 }

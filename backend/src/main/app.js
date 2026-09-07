@@ -23,7 +23,7 @@ function createApp(overrides = {}) {
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
-  app.use(express.json({ limit: '100kb' }));
+  app.use(express.json({ limit: '3mb' }));
   app.use(cookieParser());
   if (env.NODE_ENV !== 'test') app.use(morgan('dev'));
 

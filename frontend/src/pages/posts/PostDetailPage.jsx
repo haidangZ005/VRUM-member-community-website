@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit3, MessageSquare, Trash2 } from 'lucide-react';
 import CommunityHeader from '../../components/layout/CommunityHeader';
 import CommentList from '../../features/comments/components/CommentList';
+import { AttachedImages } from '../../components/ui/ImageAttachments';
 import LikeButton from '../../features/posts/components/LikeButton';
 import { useDeletePost, usePost } from '../../features/posts/hooks/usePosts';
 import { useAuthStore } from '../../store/authStore';
@@ -29,6 +30,7 @@ export default function PostDetailPage() {
           <h1>{data.title}</h1>
           <div className="detail-author"><div className="mini-avatar">{authorName.slice(0, 1).toUpperCase()}</div><div><strong>{authorName}</strong><time>{dateFormatter.format(new Date(data.createdAt))}</time></div></div>
           <div className="post-content">{data.content.split('\n').map((line, index) => <p key={`${index}-${line.slice(0, 12)}`}>{line || '\u00a0'}</p>)}</div>
+          <AttachedImages images={data.images} />
           <footer className="detail-reactions"><LikeButton post={data} /><a href="#comments"><MessageSquare size={18} /> {data.commentCount} bình luận</a></footer>
         </article>
         <CommentList postId={id} />
