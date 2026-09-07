@@ -1,4 +1,5 @@
 const ValidationError = require('../errors/ValidationError');
+const validateImages = require('./validateImages');
 
 class Post {
   constructor({
@@ -7,6 +8,7 @@ class Post {
     categoryId = null,
     title,
     content,
+    images = [],
     status = 'published',
     author = null,
     category = null,
@@ -33,6 +35,7 @@ class Post {
     this.categoryId = categoryId;
     this.title = normalizedTitle;
     this.content = normalizedContent;
+    this.images = validateImages(images);
     this.status = status;
     this.author = author;
     this.category = category;
@@ -50,6 +53,7 @@ class Post {
       categoryId: this.categoryId,
       title: this.title,
       content: this.content,
+      images: this.images,
       status: this.status,
       author: this.author,
       category: this.category,

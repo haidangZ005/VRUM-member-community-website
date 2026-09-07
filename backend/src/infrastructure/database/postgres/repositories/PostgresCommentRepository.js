@@ -8,6 +8,8 @@ function mapComment(row) {
     postId: row.post_id,
     authorId: row.author_id,
     content: row.content,
+    images: row.images,
+    parentId: row.parent_id,
     status: row.status,
     author: row.author_username ? {
       id: row.author_id,
@@ -29,8 +31,8 @@ const selectComment = `
 class PostgresCommentRepository {
   async create(comment) {
     const { rows } = await pool.query(
-      'INSERT INTO comments (post_id, author_id, content) VALUES ($1, $2, $3) RETURNING id',
-      [comment.postId, comment.authorId, comment.content],
+      'INSERT INTO comments (post_id, author_id, content, parent_id, images) VALUES ($1, $2, $3, $4, $5::jsonb) RETURNING id',
+      [comment.postId, comment.authorId, comment.content, comment.parentId, JSON.stringify(comment.images || [])],
     );
     const result = await pool.query(`${selectComment.replace('SELECT cm.*', 'SELECT cm.*, p.title AS post_title')} WHERE cm.id = $1`, [rows[0].id]);
     return mapComment(result.rows[0]);
@@ -86,6 +88,11 @@ class PostgresCommentRepository {
        COUNT(*) FILTER (WHERE status = 'removed')::int AS removed FROM comments`,
     );
     return rows[0];
+  }
+
+  async update(id, { content, images }) {
+    await pool.query('UPDATE comments SET content = $2, images = $3::jsonb WHERE id = $1', [id, content, JSON.stringify(images)]);
+    return this.findById(id);
   }
 }
 

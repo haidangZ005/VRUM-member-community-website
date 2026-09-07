@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import LikeButton from './LikeButton';
+import { AttachedImages } from '../../../components/ui/ImageAttachments';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -16,6 +17,7 @@ export default function PostCard({ post }) {
       </div>
       <Link className="post-card-link" to={`/posts/${post.id}`}>
         <h2>{post.title}</h2><p>{excerpt}</p>
+        <AttachedImages images={post.images} />
       </Link>
       <footer className="post-card-footer">
         <LikeButton post={post} compact />

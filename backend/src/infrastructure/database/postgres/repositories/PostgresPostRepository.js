@@ -9,6 +9,7 @@ function mapPost(row) {
     categoryId: row.category_id,
     title: row.title,
     content: row.content,
+    images: row.images,
     status: row.status,
     author: row.author_username ? {
       id: row.author_id,
@@ -38,9 +39,9 @@ const baseSelect = `
 class PostgresPostRepository {
   async create(post) {
     const { rows } = await pool.query(
-      `INSERT INTO posts (author_id, category_id, title, content)
-       VALUES ($1, $2, $3, $4) RETURNING id`,
-      [post.authorId, post.categoryId, post.title, post.content],
+      `INSERT INTO posts (author_id, category_id, title, content, images)
+       VALUES ($1, $2, $3, $4, $5::jsonb) RETURNING id`,
+      [post.authorId, post.categoryId, post.title, post.content, JSON.stringify(post.images || [])],
     );
     return this.findById(rows[0].id, post.authorId);
   }
@@ -73,8 +74,8 @@ class PostgresPostRepository {
   async update(id, changes, viewerId = null) {
     await pool.query(
       `UPDATE posts SET title = COALESCE($2, title), content = COALESCE($3, content),
-       category_id = CASE WHEN $4 THEN $5::uuid ELSE category_id END WHERE id = $1`,
-      [id, changes.title, changes.content, Object.prototype.hasOwnProperty.call(changes, 'categoryId'), changes.categoryId],
+       category_id = CASE WHEN $4 THEN $5::uuid ELSE category_id END, images = COALESCE($6::jsonb, images) WHERE id = $1`,
+      [id, changes.title, changes.content, Object.prototype.hasOwnProperty.call(changes, 'categoryId'), changes.categoryId, changes.images === undefined ? null : JSON.stringify(changes.images)],
     );
     return this.findById(id, viewerId);
   }
