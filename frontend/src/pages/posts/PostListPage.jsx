@@ -21,22 +21,29 @@ export default function PostListPage() {
   const category = useCategories({ id: categoryId }, Boolean(categoryId));
   const selectedCategory = category.data?.[0];
   const communityActions = useCommunityActions();
-  const createParams = new URLSearchParams(searchParams);
-  createParams.set('create', 'true');
-  const createPostUrl = `/posts?${createParams}`;
+  const createPostUrl = selectedCategory
+    ? `/posts?categoryId=${encodeURIComponent(selectedCategory.id)}&create=true`
+    : null;
   const closeComposer = () => setSearchParams((current) => { const next = new URLSearchParams(current); next.delete('create'); return next; }, { replace: true });
 
   useEffect(() => {
     setPage(1);
   }, [categoryId, sort]);
 
+  useEffect(() => {
+    if (!categoryId && searchParams.get('create') === 'true') {
+      const next = new URLSearchParams(searchParams);
+      next.delete('create');
+      setSearchParams(next, { replace: true });
+    }
+  }, [categoryId, searchParams, setSearchParams]);
+
   return (
     <div className="community-page"><CommunityHeader />
       <div className="community-shell">
         <CommunitySidebar selectedCategory={selectedCategory} />
         <main className="community-main">
-        {!selectedCategory && <div className="feed-create-action"><Link className="primary-button" to={createPostUrl}><PenLine size={18} /> Tạo bài đăng</Link></div>}
-        {searchParams.get('create') === 'true' && <CreatePostDialog category={selectedCategory} onClose={closeComposer} />}
+        {selectedCategory && searchParams.get('create') === 'true' && <CreatePostDialog category={selectedCategory} onClose={closeComposer} />}
         {selectedCategory && <><section className="topic-hero"><div><div className="topic-community-identity"><CommunityAvatar avatarUrl={selectedCategory.avatarUrl} large /><h1>{selectedCategory.name}</h1></div><p>{selectedCategory.description}</p></div><div className="topic-hero-actions">{selectedCategory.ownerId === user?.id && <button type="button" className="topic-action topic-action-delete" disabled={deletion.isPending} onClick={() => { if (window.confirm(`Xóa cộng đồng “${selectedCategory.name}”? Không thể hoàn tác. Bài đăng được giữ lại nhưng không còn thuộc cộng đồng này.`)) deletion.mutate(selectedCategory.id); }}><Trash2 size={18} />{deletion.isPending ? 'Đang xóa…' : 'Xóa cộng đồng'}</button>}{selectedCategory.joinedByCurrentUser && <button className={`topic-action topic-action-favorite ${selectedCategory.favoriteByCurrentUser ? 'active' : ''}`} type="button" title={selectedCategory.favoriteByCurrentUser ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'} aria-label={selectedCategory.favoriteByCurrentUser ? `Bỏ yêu thích ${selectedCategory.name}` : `Yêu thích ${selectedCategory.name}`} aria-pressed={selectedCategory.favoriteByCurrentUser} disabled={communityActions.favorite.isPending} onClick={() => communityActions.favorite.mutate({ id: selectedCategory.id, favorite: !selectedCategory.favoriteByCurrentUser })}><Star size={19} fill={selectedCategory.favoriteByCurrentUser ? 'currentColor' : 'none'} /></button>}<button className={`topic-action ${selectedCategory.joinedByCurrentUser ? 'joined' : ''}`} type="button" disabled={communityActions.membership.isPending} onClick={() => communityActions.membership.mutate({ id: selectedCategory.id, joined: !selectedCategory.joinedByCurrentUser })}>{selectedCategory.joinedByCurrentUser ? <Check size={18} /> : <Plus size={18} />}{selectedCategory.joinedByCurrentUser ? 'Đã tham gia' : 'Tham gia'}</button>{createPostUrl && <Link className="topic-action topic-action-primary" to={createPostUrl}><PenLine size={18} /> Tạo bài đăng</Link>}</div></section>{(deletion.error || communityActions.favorite.error || communityActions.membership.error) && <div className="alert error community-action-error">Không thể cập nhật cộng đồng. Vui lòng thử lại.</div>}</>}
         <section className="feed-column" aria-live="polite">
           <div className="feed-heading"><div><h2>{selectedCategory ? `Bài đăng trong ${selectedCategory.name}` : sort === 'popular' ? 'Phổ biến trên VRUM' : 'Bài đăng mới nhất'}</h2><p>{posts.data?.meta.total || 0} bài đăng</p></div><span className="live-pill">● {sort === 'popular' ? 'Nổi bật' : 'Mới nhất'}</span></div>

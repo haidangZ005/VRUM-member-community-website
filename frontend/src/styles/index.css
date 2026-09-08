@@ -793,7 +793,6 @@ button, input, textarea, select { font: inherit; }
 .comment-replies { margin: 10px 0 0 18px; padding-left: 12px; border-left: 1px solid #8885; display: grid; gap: 10px; }
 .comment-replies .comment-replies { margin-left: 0; padding-left: 0; border: 0; }
 .comment-body .comment-composer { margin-top: 12px; }
-.feed-create-action { display: flex; justify-content: flex-end; margin-bottom: 20px; }
 .create-post-dialog .editor-card { padding: 0; border: 0; background: transparent; box-shadow: none; }
 .create-post-dialog .editor-field textarea { min-height: 180px; max-height: 40vh; }
 .image-attachments { display: grid; gap: 10px; margin: 12px 0; min-width: 0; }
