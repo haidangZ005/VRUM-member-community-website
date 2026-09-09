@@ -43,11 +43,43 @@ describe('Community API', () => {
   });
 
   test('bảo vệ endpoint và validate nội dung', async () => {
-    await request(app).get('/api/posts').expect(401);
+    await request(app).get('/api/posts').expect(200);
+    await request(app).get('/api/posts/categories').expect(200);
+    await request(app).get('/api/posts').set('Authorization', 'Bearer token-khong-hop-le').expect(200);
+    await request(app).post('/api/posts').send({
+      title: 'Guest không được đăng bài',
+      content: 'Nội dung này hợp lệ nhưng chưa đăng nhập.',
+      categoryId: '00000000-0000-4000-8000-000000000000',
+    }).expect(401);
     await agent.post('/api/posts').set('Authorization', authorization).send({ title: 'Bài viết không có chủ đề', content: 'Nội dung này đủ dài nhưng chưa chọn chủ đề.' }).expect(422);
     await agent.post('/api/posts').set('Authorization', authorization).send({ title: 'x', content: 'ngắn' }).expect(422);
     await agent.post('/api/posts/00000000-0000-4000-8000-000000000000/comments').set('Authorization', authorization).send({ content: 'Nội dung bình luận' }).expect(404);
     await agent.get('/api/posts?page=0').set('Authorization', authorization).expect(422);
+  });
+
+  test('guest đọc được bài viết và bình luận nhưng không được tương tác', async () => {
+    const categories = await request(app).get('/api/posts/categories').expect(200);
+    const created = await agent.post('/api/posts').set('Authorization', authorization).send({
+      title: 'Bài viết công khai cho khách',
+      content: 'Khách chưa đăng nhập vẫn có thể đọc đầy đủ nội dung này.',
+      categoryId: categories.body.data[0].id,
+    }).expect(201);
+    const postId = created.body.data.id;
+    const comment = await agent.post(`/api/posts/${postId}/comments`).set('Authorization', authorization)
+      .send({ content: 'Bình luận công khai để khách đọc.' }).expect(201);
+    await agent.post(`/api/posts/${postId}/like`).set('Authorization', authorization).expect(200);
+
+    await request(app).get(`/api/posts/${postId}`).expect(200)
+      .expect(({ body }) => expect(body.data.likedByCurrentUser).toBe(false));
+    await agent.get(`/api/posts/${postId}`).set('Authorization', authorization).expect(200)
+      .expect(({ body }) => expect(body.data.likedByCurrentUser).toBe(true));
+    await request(app).get(`/api/posts/${postId}/comments`).expect(200)
+      .expect(({ body }) => expect(body.data).toHaveLength(1));
+    await request(app).post(`/api/posts/${postId}/like`).expect(401);
+    await request(app).post(`/api/posts/${postId}/comments`)
+      .send({ content: 'Guest không được bình luận.' }).expect(401);
+    await request(app).post(`/api/posts/${postId}/comments`)
+      .send({ content: 'Guest không được trả lời.', parentId: comment.body.data.id }).expect(401);
   });
 
   test('lưu ảnh cộng đồng, giữ ảnh khi sửa tên và từ chối dữ liệu ảnh không an toàn', async () => {

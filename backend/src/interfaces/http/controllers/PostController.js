@@ -8,11 +8,11 @@ async function ensureCategory(categoryRepository, id) {
 function makePostController(useCases, dependencies) {
   return {
     async list(req, res) {
-      const result = await useCases.listPosts.execute({ ...req.validatedQuery, viewerId: req.user.id });
+      const result = await useCases.listPosts.execute({ ...req.validatedQuery, viewerId: req.user?.id });
       return res.json(result);
     },
     async getById(req, res) {
-      return res.json({ data: await useCases.getPostDetail.execute(req.validatedParams.id, req.user.id) });
+      return res.json({ data: await useCases.getPostDetail.execute(req.validatedParams.id, req.user?.id) });
     },
     async create(req, res) {
       return res.status(201).json({ data: await useCases.createPost.execute(req.user.id, req.validatedBody) });
@@ -30,7 +30,7 @@ function makePostController(useCases, dependencies) {
       return res.json({ data: await useCases.unlikePost.execute(req.validatedParams.id, req.user.id) });
     },
     async listComments(req, res) {
-      return res.json({ data: await useCases.listCommentsByPost.execute(req.validatedParams.id, req.user.id) });
+      return res.json({ data: await useCases.listCommentsByPost.execute(req.validatedParams.id, req.user?.id) });
     },
     async createComment(req, res) {
       return res.status(201).json({ data: await useCases.createComment.execute(req.validatedParams.id, req.user.id, req.validatedBody) });
@@ -43,15 +43,16 @@ function makePostController(useCases, dependencies) {
     },
     async listCategories(req, res) {
       const { id, search = '', limit, mine, joined, favorites } = req.validatedQuery;
+      if (!req.user && (mine || joined || favorites)) return res.json({ data: [] });
       if (id) {
-        const category = await dependencies.categoryRepository.findById(id, req.user.id);
+        const category = await dependencies.categoryRepository.findById(id, req.user?.id);
         return res.json({ data: category ? [category] : [] });
       }
       return res.json({ data: await dependencies.categoryRepository.list({
         search,
         limit,
-        ownerId: mine ? req.user.id : null,
-        viewerId: req.user.id,
+        ownerId: mine ? req.user?.id : null,
+        viewerId: req.user?.id,
         joinedOnly: Boolean(joined || favorites),
         favoritesOnly: Boolean(favorites),
       }) });

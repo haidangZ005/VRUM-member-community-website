@@ -21,15 +21,18 @@ export function useDeleteCategory() {
 }
 
 export function usePosts(params) {
-  return useQuery({ queryKey: ['posts', params], queryFn: () => postApi.list(params), placeholderData: (previous) => previous });
+  const { isInitialized, user } = useAuthStore();
+  return useQuery({ queryKey: ['posts', params, user?.id || 'guest'], queryFn: () => postApi.list(params), placeholderData: (previous) => previous, enabled: isInitialized });
 }
 
 export function usePost(id) {
-  return useQuery({ queryKey: ['post', id], queryFn: () => postApi.getById(id), enabled: Boolean(id) });
+  const { isInitialized, user } = useAuthStore();
+  return useQuery({ queryKey: ['post', id, user?.id || 'guest'], queryFn: () => postApi.getById(id), enabled: Boolean(id) && isInitialized });
 }
 
 export function useCategories(params, enabled = true) {
-  return useQuery({ queryKey: ['categories', params], queryFn: () => postApi.categories(params), staleTime: 5 * 60 * 1000, enabled });
+  const { isInitialized, user } = useAuthStore();
+  return useQuery({ queryKey: ['categories', params, user?.id || 'guest'], queryFn: () => postApi.categories(params), staleTime: 5 * 60 * 1000, enabled: enabled && isInitialized });
 }
 
 export function useCreateCategory() {
@@ -69,10 +72,11 @@ export function useCreatePost({ stayOnFeed = false } = {}) {
 export function useUpdatePost() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
   return useMutation({
     mutationFn: postApi.update,
     onSuccess: (post) => {
-      queryClient.setQueryData(['post', post.id], post);
+      queryClient.setQueryData(['post', post.id, user?.id || 'guest'], post);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       navigate(`/posts/${post.id}`);
     },
@@ -93,10 +97,11 @@ export function useDeletePost() {
 
 export function useToggleLike(post) {
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
   return useMutation({
     mutationFn: () => (post.likedByCurrentUser ? postApi.unlike(post.id) : postApi.like(post.id)),
     onSuccess: ({ liked, likeCount }) => {
-      queryClient.setQueryData(['post', post.id], (current) => current ? { ...current, likedByCurrentUser: liked, likeCount } : current);
+      queryClient.setQueryData(['post', post.id, user?.id || 'guest'], (current) => current ? { ...current, likedByCurrentUser: liked, likeCount } : current);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });

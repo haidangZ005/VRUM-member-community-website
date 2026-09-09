@@ -1,17 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { useAuthStore } from '../../../store/authStore';
 
 export function useLogin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const setSession = useAuthStore((state) => state.setSession);
-  return useMutation({ mutationFn: authApi.login, onSuccess: (session) => { setSession(session); navigate(session.user.role === 'admin' ? '/admin' : '/posts'); } });
+  return useMutation({ mutationFn: authApi.login, onSuccess: (session) => {
+    setSession(session);
+    navigate(location.state?.from || (session.user.role === 'admin' ? '/admin' : '/posts'), { replace: true });
+  } });
 }
 
 export function useRegister() {
   const navigate = useNavigate();
-  return useMutation({ mutationFn: authApi.register, onSuccess: () => navigate('/login', { state: { notice: 'Tài khoản đã được tạo. Bạn có thể đăng nhập ngay.' } }) });
+  const location = useLocation();
+  return useMutation({ mutationFn: authApi.register, onSuccess: () => navigate('/login', { state: { notice: 'Tài khoản đã được tạo. Bạn có thể đăng nhập ngay.', from: location.state?.from } }) });
 }
 
 export function useForgotPassword() { return useMutation({ mutationFn: authApi.forgotPassword }); }

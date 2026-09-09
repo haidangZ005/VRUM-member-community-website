@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MessageSquare, Send, Pencil, Reply, Trash2 } from 'lucide-react';
 import { useComments, useCommentMutation } from '../hooks/useComments';
 import { useAuthStore } from '../../../store/authStore';
@@ -28,8 +29,8 @@ function CommentComposer({ postId, comment, parentId, onDone, onCancel }) {
   </form>;
 }
 
-function CommentItem({ postId, comment, childrenByParent, userId }) {
-  const [mode, setMode] = useState(null);
+function CommentItem({ postId, comment, childrenByParent, userId, loginState, replyTo, clearReplyIntent }) {
+  const [mode, setMode] = useState(userId && comment.id === replyTo ? 'reply' : null);
   const remove = useCommentMutation(postId, 'remove');
   const name = comment.author?.fullName || comment.author?.username || 'Thành viên';
   return <div className="comment-thread">
@@ -39,20 +40,28 @@ function CommentItem({ postId, comment, childrenByParent, userId }) {
         {mode === 'edit' ? <CommentComposer postId={postId} comment={comment} onDone={() => setMode(null)} onCancel={() => setMode(null)} /> : <p>{comment.content}</p>}
         {mode !== 'edit' && <AttachedImages images={comment.images} />}
         <div className="comment-actions">
-          <button type="button" onClick={() => setMode(mode === 'reply' ? null : 'reply')} disabled={remove.isPending}><Reply size={15} /> Trả lời</button>
+          {userId ? <button type="button" onClick={() => setMode(mode === 'reply' ? null : 'reply')} disabled={remove.isPending}><Reply size={15} /> Trả lời</button> : <Link to="/login" state={{ from: `${loginState.fromBase}${loginState.fromBase.includes('?') ? '&' : '?'}replyTo=${encodeURIComponent(comment.id)}#comment-${comment.id}` }}><Reply size={15} /> Đăng nhập để trả lời</Link>}
           {comment.authorId === userId && <><button type="button" onClick={() => setMode('edit')} disabled={remove.isPending}><Pencil size={15} /> Sửa</button><button type="button" disabled={remove.isPending} onClick={() => { if (window.confirm('Xóa bình luận này? Các câu trả lời vẫn được giữ lại.')) remove.mutate({ id: comment.id }); }}><Trash2 size={15} />{remove.isPending ? 'Đang xóa…' : 'Xóa'}</button></>}
         </div>
         {remove.error && <div className="alert error" role="alert">{errorMessage(remove.error)}</div>}
-        {mode === 'reply' && <CommentComposer postId={postId} parentId={comment.id} onDone={() => setMode(null)} onCancel={() => setMode(null)} />}
+        {mode === 'reply' && <CommentComposer postId={postId} parentId={comment.id} onDone={() => { setMode(null); clearReplyIntent(); }} onCancel={() => { setMode(null); clearReplyIntent(); }} />}
       </div>
     </article>
-    {childrenByParent.get(comment.id)?.length > 0 && <div className="comment-replies">{childrenByParent.get(comment.id).map((child) => <CommentItem key={child.id} postId={postId} comment={child} childrenByParent={childrenByParent} userId={userId} />)}</div>}
+    {childrenByParent.get(comment.id)?.length > 0 && <div className="comment-replies">{childrenByParent.get(comment.id).map((child) => <CommentItem key={child.id} postId={postId} comment={child} childrenByParent={childrenByParent} userId={userId} loginState={loginState} replyTo={replyTo} clearReplyIntent={clearReplyIntent} />)}</div>}
   </div>;
 }
 
 export default function CommentList({ postId }) {
   const comments = useComments(postId);
+  const location = useLocation();
+  const navigate = useNavigate();
   const userId = useAuthStore((state) => state.user?.id);
+  const params = new URLSearchParams(location.search);
+  const replyTo = params.get('replyTo');
+  params.delete('replyTo');
+  const baseSearch = params.toString();
+  const loginState = { from: `${location.pathname}${baseSearch ? `?${baseSearch}` : ''}#comments`, fromBase: `${location.pathname}${baseSearch ? `?${baseSearch}` : ''}` };
+  const clearReplyIntent = () => { if (replyTo) navigate(loginState.from, { replace: true }); };
   const items = comments.data || [];
   const ids = new Set(items.map((comment) => comment.id));
   const childrenByParent = new Map();
@@ -61,13 +70,16 @@ export default function CommentList({ postId }) {
     if (!childrenByParent.has(parent)) childrenByParent.set(parent, []);
     childrenByParent.get(parent).push(comment);
   }
+  useEffect(() => {
+    if (replyTo && items.length > 0) document.getElementById(`comment-${replyTo}`)?.scrollIntoView({ block: 'center' });
+  }, [items.length, replyTo]);
   return <section className="comments-section" id="comments">
     <div className="section-title"><h2><MessageSquare size={23} /> {items.length} bình luận</h2></div>
-    <CommentComposer postId={postId} />
+    {userId ? <CommentComposer postId={postId} /> : <div className="empty-comments"><Link to="/login" state={loginState}>Đăng nhập để bình luận hoặc trả lời</Link></div>}
     <div className="comment-list">
       {comments.isLoading && <p className="muted-copy">Đang tải bình luận…</p>}
       {comments.error && <div className="alert error" role="alert">Không thể tải bình luận. <button onClick={() => comments.refetch()}>Thử lại</button></div>}
-      {childrenByParent.get(null)?.map((comment) => <CommentItem key={comment.id} postId={postId} comment={comment} childrenByParent={childrenByParent} userId={userId} />)}
+      {childrenByParent.get(null)?.map((comment) => <CommentItem key={comment.id} postId={postId} comment={comment} childrenByParent={childrenByParent} userId={userId} loginState={loginState} replyTo={replyTo} clearReplyIntent={clearReplyIntent} />)}
       {!comments.isLoading && !comments.error && items.length === 0 && <div className="empty-comments">Chưa có bình luận. Hãy là người mở đầu cuộc trò chuyện.</div>}
     </div>
   </section>;

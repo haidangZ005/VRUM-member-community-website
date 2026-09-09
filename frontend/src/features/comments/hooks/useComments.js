@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { commentApi } from '../api/commentApi';
+import { useAuthStore } from '../../../store/authStore';
 
 export function useComments(postId) {
-  return useQuery({ queryKey: ['comments', postId], queryFn: () => commentApi.list(postId), enabled: Boolean(postId) });
+  const { isInitialized, user } = useAuthStore();
+  return useQuery({ queryKey: ['comments', postId, user?.id || 'guest'], queryFn: () => commentApi.list(postId), enabled: Boolean(postId) && isInitialized });
 }
 
 export function useCommentMutation(postId, action = 'create') {
