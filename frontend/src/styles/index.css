@@ -223,10 +223,11 @@ button, input, textarea, select { font: inherit; }
 .empty-state h3 { margin: 13px 0 5px; font-family: 'Fraunces', serif; font-size: 24px; }
 .empty-state p { margin: 0 0 14px; }
 .error-state { color: #4e4e4e; border-color: #c5c5c5; background: #f6f6f6; }
-.pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; color: #808080; font-size: 13px; }
-.pagination button { display: flex; align-items: center; gap: 7px; padding: 9px 12px; border: 1px solid #d7d7d7; border-radius: 9px; color: #090909; background: #fdfdfd; cursor: pointer; transition: .2s; }
-.pagination button:hover:not(:disabled) { color: #ffffff; background: #090909; border-color: #090909; }
-.pagination button:disabled { opacity: .45; cursor: not-allowed; }
+.feed-load-trigger { height: 1px; }
+.feed-loading-more, .feed-load-retry { margin: 8px auto 0; color: #767676; font-size: 13px; }
+.feed-loading-more { display: flex; width: fit-content; align-items: center; gap: 9px; padding: 18px; }
+.feed-load-retry { display: block; padding: 12px 16px; border: 0; background: transparent; cursor: pointer; }
+.feed-load-retry:hover { color: #090909; text-decoration: underline; text-underline-offset: 4px; }
 .community-manager-main { max-width: 1000px; }
 .community-manager-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; margin: 30px 0 32px; }
 .community-manager-heading h1 { margin: 0 0 9px; color: #303030; font-family: 'Fraunces', serif; font-size: clamp(38px, 5vw, 56px); line-height: 1.05; letter-spacing: -.035em; }
@@ -485,7 +486,6 @@ button, input, textarea, select { font: inherit; }
 :root[data-theme='dark'] .input-shell,
 :root[data-theme='dark'] .ghost-button,
 :root[data-theme='dark'] .select-trigger,
-:root[data-theme='dark'] .pagination button,
 :root[data-theme='dark'] .admin-pagination button { color: #c0c0c0; border-color: #343434; background: #191919; }
 :root[data-theme='dark'] .select-trigger:hover { color: #ffffff; border-color: #ffffff; background: #242424; }
 :root[data-theme='dark'] .input-shell input,
@@ -583,7 +583,9 @@ button, input, textarea, select { font: inherit; }
 :root[data-theme='dark'] .reaction-button,
 :root[data-theme='dark'] .comment-count,
 :root[data-theme='dark'] .detail-reactions a,
-:root[data-theme='dark'] .pagination { color: #ababab; }
+:root[data-theme='dark'] .feed-loading-more,
+:root[data-theme='dark'] .feed-load-retry { color: #ababab; }
+:root[data-theme='dark'] .feed-load-retry:hover { color: #ffffff; }
 :root[data-theme='dark'] .community-nav a.active,
 :root[data-theme='dark'] .admin-sidebar nav a:hover,
 :root[data-theme='dark'] .admin-sidebar nav a.active { color: #cbcbcb; background: #242424; }
@@ -660,7 +662,6 @@ button, input, textarea, select { font: inherit; }
 :root[data-theme='dark'] .ghost-button:hover { color: #090909; background: #ffffff; }
 :root[data-theme='dark'] .icon-button { color: #f4f4f4; border-color: #343434; background: #191919; }
 :root[data-theme='dark'] .icon-button:hover { color: #090909; border-color: #ffffff; background: #ffffff; }
-:root[data-theme='dark'] .pagination button:hover:not(:disabled),
 :root[data-theme='dark'] .admin-pagination button:hover:not(:disabled) { color: #090909; border-color: #ffffff; background: #ffffff; }
 :root[data-theme='dark'] .owner-actions button:hover { color: #090909; background: #ffffff; }
 :root[data-theme='dark'] .sidebar-favorite { color: #ffffff; }

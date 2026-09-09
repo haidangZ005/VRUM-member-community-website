@@ -1,8 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { postApi } from '../api/postApi';
 import { useAuthStore } from '../../../store/authStore';
 import { forgetCommunity } from '../../../utils/recentCommunities';
+import { getNextPostsPage } from '../../../utils/postPagination';
 
 export function useDeleteCategory() {
   const navigate = useNavigate();
@@ -22,7 +23,13 @@ export function useDeleteCategory() {
 
 export function usePosts(params) {
   const { isInitialized, user } = useAuthStore();
-  return useQuery({ queryKey: ['posts', params, user?.id || 'guest'], queryFn: () => postApi.list(params), placeholderData: (previous) => previous, enabled: isInitialized });
+  return useInfiniteQuery({
+    queryKey: ['posts', params, user?.id || 'guest'],
+    queryFn: ({ pageParam }) => postApi.list({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: getNextPostsPage,
+    enabled: isInitialized,
+  });
 }
 
 export function usePost(id) {
