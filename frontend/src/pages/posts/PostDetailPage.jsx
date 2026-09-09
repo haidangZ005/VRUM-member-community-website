@@ -15,7 +15,7 @@ export default function PostDetailPage() {
   const remove = useDeletePost();
   const user = useAuthStore((state) => state.user);
 
-  if (post.isLoading) return <div className="page-loader">Đang mở cuộc trò chuyện…</div>;
+  if (!post.data && !post.error) return <div className="page-loader">Đang mở cuộc trò chuyện…</div>;
   if (post.error) return <div className="community-page"><CommunityHeader /><div className="detail-state"><h1>Không tìm thấy bài viết</h1><Link to="/posts"><ArrowLeft size={17} /> Trở lại bảng tin</Link></div></div>;
   const data = post.data;
   const isOwner = user?.id === data.authorId;

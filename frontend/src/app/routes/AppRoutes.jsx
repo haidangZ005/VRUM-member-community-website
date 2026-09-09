@@ -34,10 +34,10 @@ export default function AppRoutes() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-      <Route path="/posts" element={<ProtectedRoute><PostListPage /></ProtectedRoute>} />
+      <Route path="/posts" element={<PostListPage />} />
       <Route path="/posts/new" element={<ProtectedRoute><CreatePostPage /></ProtectedRoute>} />
       <Route path="/communities/manage" element={<ProtectedRoute><ManageCommunitiesPage /></ProtectedRoute>} />
-      <Route path="/posts/:id" element={<ProtectedRoute><PostDetailPage /></ProtectedRoute>} />
+      <Route path="/posts/:id" element={<PostDetailPage />} />
       <Route path="/posts/:id/edit" element={<ProtectedRoute><PostEditorPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminRoute><AdminLayout /></AdminRoute></ProtectedRoute>}>
         <Route index element={<DashboardPage />} />

@@ -18,6 +18,8 @@ function createApp(overrides = {}) {
   const dependencies = overrides.dependencies || makeDependencies();
   const useCases = overrides.useCases || makeUseCases(dependencies);
   const tokenService = overrides.tokenService || dependencies.tokenService;
+  const authMiddleware = makeAuthMiddleware(tokenService, dependencies.userRepository);
+  const optionalAuthMiddleware = makeAuthMiddleware(tokenService, dependencies.userRepository, { optional: true });
   const app = express();
 
   app.disable('x-powered-by');
@@ -32,7 +34,8 @@ function createApp(overrides = {}) {
     userController: makeUserController(useCases),
     postController: makePostController(useCases, dependencies),
     adminController: makeAdminController(useCases),
-    authMiddleware: makeAuthMiddleware(tokenService, dependencies.userRepository),
+    authMiddleware,
+    optionalAuthMiddleware,
   }));
   app.use((_req, res) => res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Không tìm thấy endpoint' } }));
   app.use(errorHandler);

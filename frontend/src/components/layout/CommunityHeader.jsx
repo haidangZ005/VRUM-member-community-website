@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
-import { LogOut, Search, ShieldCheck, UserRound } from 'lucide-react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { LogIn, LogOut, Search, ShieldCheck, UserPlus, UserRound } from 'lucide-react';
 import { useLogout } from '../../features/auth/hooks/useAuth';
 import { useCategories } from '../../features/posts/hooks/usePosts';
 import { useAuthStore } from '../../store/authStore';
@@ -9,8 +9,9 @@ import BrandLogo from '../ui/BrandLogo';
 
 export default function CommunityHeader() {
   const logout = useLogout();
+  const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const displayName = user?.fullName || user?.username || 'Thành viên';
+  const displayName = user?.fullName || user?.username;
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const results = useCategories({ search: searchQuery, limit: 8 }, Boolean(searchQuery));
@@ -33,8 +34,13 @@ export default function CommunityHeader() {
         {user?.role === 'admin' && <nav className="community-nav" aria-label="Điều hướng quản trị"><NavLink to="/admin"><ShieldCheck size={16} /> Quản trị</NavLink></nav>}
         <div className="account-menu">
           <ThemeSwitcher />
-          <Link className="account-link" to="/profile"><UserRound size={17} /><span>{displayName}</span></Link>
-          <button className="icon-button" type="button" title="Đăng xuất" aria-label="Đăng xuất" onClick={() => logout.mutate()} disabled={logout.isPending}><LogOut size={18} /></button>
+          {user ? <>
+            <Link className="account-link" to="/profile"><UserRound size={17} /><span>{displayName}</span></Link>
+            <button className="icon-button" type="button" title="Đăng xuất" aria-label="Đăng xuất" onClick={() => logout.mutate()} disabled={logout.isPending}><LogOut size={18} /></button>
+          </> : <>
+            <Link className="account-link" to="/login" state={{ from: `${location.pathname}${location.search}${location.hash}` }}><LogIn size={17} /><span>Đăng nhập</span></Link>
+            <Link className="account-link" to="/register" state={{ from: `${location.pathname}${location.search}${location.hash}` }}><UserPlus size={17} /><span>Đăng ký</span></Link>
+          </>}
         </div>
       </div>
     </header>
