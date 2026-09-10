@@ -5,6 +5,7 @@ import { useComments, useCommentMutation, useSetCommentVote } from '../hooks/use
 import { useAuthStore } from '../../../store/authStore';
 import ImageAttachments, { AttachedImages } from '../../../components/ui/ImageAttachments';
 import VoteControl from '../../../components/ui/VoteControl';
+import UserAvatar from '../../../components/ui/UserAvatar';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
 const errorMessage = (error) => error?.response?.data?.error?.message || 'Không thể lưu bình luận. Vui lòng thử lại.';
@@ -38,7 +39,7 @@ function CommentItem({ postId, comment, childrenByParent, userId, loginState, re
   const name = comment.author?.fullName || comment.author?.username || 'Thành viên';
   return <div className="comment-thread">
     <article className="comment-item" id={`comment-${comment.id}`}>
-      <div className="mini-avatar small">{name.slice(0, 1).toUpperCase()}</div>
+      <UserAvatar user={comment.author} small />
       <div className="comment-body"><div className="comment-meta"><strong>{name}</strong><time dateTime={comment.createdAt}>{dateFormatter.format(new Date(comment.createdAt))}</time></div>
         {mode === 'edit' ? <CommentComposer postId={postId} comment={comment} onDone={() => setMode(null)} onCancel={() => setMode(null)} /> : <p>{comment.content}</p>}
         {mode !== 'edit' && <AttachedImages images={comment.images} />}

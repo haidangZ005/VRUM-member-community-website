@@ -204,6 +204,7 @@ button, input, textarea, select { font: inherit; }
 .post-card-meta { display: flex; align-items: center; gap: 11px; }
 .mini-avatar { display: grid; flex: none; place-items: center; width: 40px; height: 40px; border-radius: 12px; color: #fff; font-family: 'Fraunces', serif; font-size: 18px; background: #848484; }
 .mini-avatar.small { width: 35px; height: 35px; border-radius: 10px; font-size: 15px; }
+.mini-avatar img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .post-card-meta > div:nth-child(2), .detail-author > div:last-child { display: grid; gap: 2px; }
 .post-card-meta strong, .detail-author strong { color: #3e3e3e; font-size: 13px; }
 .post-card-meta span:not(.category-chip), .detail-author time { color: #929292; font-size: 11px; }

@@ -4,6 +4,7 @@ import PostVoteControl from './PostVoteControl';
 import { AttachedImages } from '../../../components/ui/ImageAttachments';
 import { useFeedActions } from '../hooks/usePosts';
 import { useAuthStore } from '../../../store/authStore';
+import UserAvatar from '../../../components/ui/UserAvatar';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -18,7 +19,7 @@ export default function PostCard({ post, onHidden, onNotInterested }) {
   return (
     <article className="post-card">
       <div className="post-card-meta">
-        <div className="mini-avatar">{authorName.slice(0, 1).toUpperCase()}</div>
+        <UserAvatar user={post.author} />
         <div><strong>{authorName}</strong><span>{dateFormatter.format(new Date(post.createdAt))}</span></div>
         {post.category ? <Link className="category-chip" to={`/posts?categoryId=${encodeURIComponent(post.category.id)}`}>{post.category.name}</Link> : <span className="category-chip">Chung</span>}
       </div>

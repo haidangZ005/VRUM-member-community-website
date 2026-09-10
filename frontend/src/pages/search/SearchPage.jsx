@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, Image as ImageIcon, MessageSquare, Search, Users } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Image as ImageIcon, MessageSquare, Search } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import CommunityHeader from '../../components/layout/CommunityHeader';
 import CommunityAvatar from '../../components/ui/CommunityAvatar';
 import { useCategories } from '../../features/posts/hooks/usePosts';
 import { useSearch } from '../../features/search/hooks/useSearch';
+import UserAvatar from '../../components/ui/UserAvatar';
 
 const TYPES = [
   ['all', 'Tất cả'], ['posts', 'Bài viết'], ['comments', 'Bình luận'], ['communities', 'Cộng đồng'], ['users', 'Người dùng'], ['media', 'Media'],
@@ -24,7 +25,7 @@ function CommunityResult({ item }) {
 }
 
 function UserResult({ item }) {
-  return <article className="search-user-result"><span className="mini-avatar"><Users size={18} /></span><span><strong>u/{item.username}</strong><small>{item.fullName || 'Thành viên VRUM'}</small></span></article>;
+  return <article className="search-user-result"><UserAvatar user={item} /><span><strong>u/{item.username}</strong><small>{item.fullName || 'Thành viên VRUM'}</small></span></article>;
 }
 
 function MediaResult({ item }) {
