@@ -1,12 +1,16 @@
 const NotFoundError = require('../../../domain/errors/NotFoundError');
 
 class ModerateComment {
-  constructor({ commentRepository }) { this.commentRepository = commentRepository; }
+  constructor({ notificationPublisher, unitOfWork }) { Object.assign(this, { notificationPublisher, unitOfWork }); }
 
-  async execute(commentId) {
-    if (!(await this.commentRepository.findById(commentId))) throw new NotFoundError('Không tìm thấy bình luận');
-    await this.commentRepository.moderate(commentId, 'removed');
-    return { message: 'Đã gỡ bình luận khỏi cộng đồng' };
+  async execute(commentId, actorId, reason) {
+    return this.unitOfWork.run(async ({ commentRepository, notificationRepository }) => {
+      const comment = await commentRepository.findById(commentId);
+      if (!comment) throw new NotFoundError('Không tìm thấy bình luận');
+      await commentRepository.moderate(commentId, 'removed');
+      await this.notificationPublisher.contentModerated({ entityType: 'comment', entity: comment, actorId, reason, notificationRepository });
+      return { message: 'Đã gỡ bình luận khỏi cộng đồng' };
+    });
   }
 }
 

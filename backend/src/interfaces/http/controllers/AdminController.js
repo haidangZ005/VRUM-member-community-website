@@ -16,13 +16,13 @@ function makeAdminController(useCases) {
       return res.json(await useCases.adminListPosts.execute(req.validatedQuery));
     },
     async deletePost(req, res) {
-      return res.json({ data: await useCases.adminDeletePost.execute(req.validatedParams.id) });
+      return res.json({ data: await useCases.adminDeletePost.execute(req.validatedParams.id, req.user.id, req.validatedBody.reason) });
     },
     async listComments(req, res) {
       return res.json(await useCases.adminListComments.execute(req.validatedQuery));
     },
     async deleteComment(req, res) {
-      return res.json({ data: await useCases.moderateComment.execute(req.validatedParams.id) });
+      return res.json({ data: await useCases.moderateComment.execute(req.validatedParams.id, req.user.id, req.validatedBody.reason) });
     },
     async listCategories(_req, res) {
       return res.json({ data: await useCases.listAdminCategories.execute() });

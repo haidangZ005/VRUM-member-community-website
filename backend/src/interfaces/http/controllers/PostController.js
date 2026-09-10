@@ -23,11 +23,17 @@ function makePostController(useCases, dependencies) {
     async remove(req, res) {
       return res.json({ data: await useCases.deletePost.execute(req.validatedParams.id, req.user.id) });
     },
-    async like(req, res) {
-      return res.json({ data: await useCases.likePost.execute(req.validatedParams.id, req.user.id) });
+    async setPostVote(req, res) {
+      return res.json({ data: await useCases.setPostVote.execute(req.validatedParams.id, req.user.id, req.validatedBody.value) });
     },
-    async unlike(req, res) {
-      return res.json({ data: await useCases.unlikePost.execute(req.validatedParams.id, req.user.id) });
+    async recordPostView(req, res) {
+      return res.json({ data: await useCases.recordPostView.execute(req.validatedParams.id, req.user.id) });
+    },
+    async setPostHidden(req, res) {
+      return res.json({ data: await useCases.setPostHidden.execute(req.validatedParams.id, req.user.id, req.validatedBody.hidden) });
+    },
+    async markPostNotInterested(req, res) {
+      return res.json({ data: await useCases.markPostNotInterested.execute(req.validatedParams.id, req.user.id) });
     },
     async listComments(req, res) {
       return res.json({ data: await useCases.listCommentsByPost.execute(req.validatedParams.id, req.user?.id) });
@@ -40,6 +46,9 @@ function makePostController(useCases, dependencies) {
     },
     async deleteComment(req, res) {
       return res.json({ data: await useCases.editComment.execute(req.validatedParams.id, req.validatedParams.commentId, req.user.id, null) });
+    },
+    async setCommentVote(req, res) {
+      return res.json({ data: await useCases.setCommentVote.execute(req.validatedParams.id, req.validatedParams.commentId, req.user.id, req.validatedBody.value) });
     },
     async listCategories(req, res) {
       const { id, search = '', limit, mine, joined, favorites } = req.validatedQuery;
@@ -81,6 +90,13 @@ function makePostController(useCases, dependencies) {
     async unfavoriteCategory(req, res) {
       await ensureCategory(dependencies.categoryRepository, req.validatedParams.id);
       return res.json({ data: await dependencies.categoryRepository.setFavorite(req.validatedParams.id, req.user.id, false) });
+    },
+    async setCategoryMuted(req, res) {
+      await ensureCategory(dependencies.categoryRepository, req.validatedParams.id);
+      return res.json({ data: await dependencies.categoryRepository.setMuted(req.validatedParams.id, req.user.id, req.validatedBody.muted) });
+    },
+    async recommendedCategories(req, res) {
+      return res.json({ data: await dependencies.categoryRepository.listRecommended(req.user.id, req.validatedQuery.limit) });
     },
   };
 }

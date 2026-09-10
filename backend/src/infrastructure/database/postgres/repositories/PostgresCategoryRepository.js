@@ -11,6 +11,7 @@ function mapCategory(row) {
     ownerId: row.owner_id ?? row.ownerId,
     joinedByCurrentUser: row.joined_by_current_user ?? row.joinedByCurrentUser,
     favoriteByCurrentUser: row.favorite_by_current_user ?? row.favoriteByCurrentUser,
+    mutedByCurrentUser: row.muted_by_current_user ?? row.mutedByCurrentUser,
     createdAt: row.created_at ?? row.createdAt,
     updatedAt: row.updated_at ?? row.updatedAt,
   });
@@ -20,9 +21,11 @@ class PostgresCategoryRepository {
   async findById(id, viewerId = null) {
     const { rows } = await pool.query(
       `SELECT c.id, c.name, c.description, c.avatar_url, c.owner_id AS "ownerId", c.created_at AS "createdAt", c.updated_at AS "updatedAt",
-              (cm.user_id IS NOT NULL) AS "joinedByCurrentUser", COALESCE(cm.is_favorite, FALSE) AS "favoriteByCurrentUser"
+              (cm.user_id IS NOT NULL) AS "joinedByCurrentUser", COALESCE(cm.is_favorite, FALSE) AS "favoriteByCurrentUser",
+              (mc.user_id IS NOT NULL) AS "mutedByCurrentUser"
        FROM categories c
        LEFT JOIN community_memberships cm ON cm.category_id = c.id AND cm.user_id = $2::uuid
+       LEFT JOIN muted_communities mc ON mc.category_id = c.id AND mc.user_id = $2::uuid
        WHERE c.id = $1`,
       [id, viewerId],
     );
@@ -32,9 +35,11 @@ class PostgresCategoryRepository {
   async list({ search = '', limit = null, ownerId = null, viewerId = null, joinedOnly = false, favoritesOnly = false } = {}) {
     const { rows } = await pool.query(
       `SELECT c.id, c.name, c.description, c.avatar_url, c.owner_id AS "ownerId", c.created_at AS "createdAt", c.updated_at AS "updatedAt",
-              (cm.user_id IS NOT NULL) AS "joinedByCurrentUser", COALESCE(cm.is_favorite, FALSE) AS "favoriteByCurrentUser"
+              (cm.user_id IS NOT NULL) AS "joinedByCurrentUser", COALESCE(cm.is_favorite, FALSE) AS "favoriteByCurrentUser",
+              (mc.user_id IS NOT NULL) AS "mutedByCurrentUser"
        FROM categories c
        LEFT JOIN community_memberships cm ON cm.category_id = c.id AND cm.user_id = $5::uuid
+       LEFT JOIN muted_communities mc ON mc.category_id = c.id AND mc.user_id = $5::uuid
        WHERE ($1 = '' OR c.name ILIKE $2)
          AND ($4::uuid IS NULL OR c.owner_id = $4)
          AND ($6::boolean = FALSE OR cm.user_id IS NOT NULL)
@@ -101,6 +106,52 @@ class PostgresCategoryRepository {
       await pool.query('UPDATE community_memberships SET is_favorite = FALSE WHERE user_id = $1 AND category_id = $2', [userId, categoryId]);
     }
     return this.findById(categoryId, userId);
+  }
+
+  async setMuted(categoryId, userId, muted) {
+    if (muted) {
+      await pool.query('INSERT INTO muted_communities (user_id, category_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [userId, categoryId]);
+    } else {
+      await pool.query('DELETE FROM muted_communities WHERE user_id = $1 AND category_id = $2', [userId, categoryId]);
+    }
+    return this.findById(categoryId, userId);
+  }
+
+  async listRecommended(userId, limit = 5) {
+    const { rows } = await pool.query(
+      `SELECT c.id, c.name, c.description, c.avatar_url, c.owner_id AS "ownerId",
+        c.created_at AS "createdAt", c.updated_at AS "updatedAt",
+        FALSE AS "joinedByCurrentUser", FALSE AS "favoriteByCurrentUser", FALSE AS "mutedByCurrentUser"
+       FROM categories c
+       WHERE NOT EXISTS (
+         SELECT 1 FROM community_memberships cm WHERE cm.category_id = c.id AND cm.user_id = $1
+       ) AND NOT EXISTS (
+         SELECT 1 FROM muted_communities mc WHERE mc.category_id = c.id AND mc.user_id = $1
+       ) AND NOT EXISTS (
+         SELECT 1 FROM not_interested_posts rf
+         WHERE rf.category_id = c.id AND rf.user_id = $1
+       )
+       ORDER BY CASE WHEN EXISTS (
+         SELECT 1 FROM posts interacted
+         WHERE interacted.category_id = c.id AND (
+           EXISTS (SELECT 1 FROM post_votes pv WHERE pv.post_id = interacted.id AND pv.user_id = $1)
+           OR EXISTS (SELECT 1 FROM comments cm WHERE cm.post_id = interacted.id AND cm.author_id = $1)
+           OR EXISTS (SELECT 1 FROM post_views viewed WHERE viewed.post_id = interacted.id AND viewed.user_id = $1)
+         )
+       ) THEN 1 ELSE 0 END DESC, (
+         SELECT COUNT(*) FROM posts p WHERE p.category_id = c.id AND p.status = 'published'
+           AND p.created_at > now() - interval '30 days'
+       ) * 2 + (
+         SELECT COUNT(*) FROM comments cm JOIN posts cp ON cp.id = cm.post_id
+         WHERE cp.category_id = c.id AND cm.status = 'visible' AND cm.created_at > now() - interval '30 days'
+       ) + (
+         SELECT COALESCE(SUM(pv.value), 0) FROM post_votes pv JOIN posts vp ON vp.id = pv.post_id
+         WHERE vp.category_id = c.id AND pv.updated_at > now() - interval '30 days'
+       ) DESC, c.name ASC
+       LIMIT $2`,
+      [userId, limit],
+    );
+    return rows.map(mapCategory);
   }
 
   async count() {

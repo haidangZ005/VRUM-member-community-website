@@ -1,7 +1,7 @@
 const ValidationError = require('../errors/ValidationError');
 
 class Category {
-  constructor({ id, name, description = null, avatarUrl = null, ownerId = null, joinedByCurrentUser = false, favoriteByCurrentUser = false, createdAt, updatedAt }) {
+  constructor({ id, name, description = null, avatarUrl = null, ownerId = null, joinedByCurrentUser = false, favoriteByCurrentUser = false, mutedByCurrentUser = false, createdAt, updatedAt }) {
     const normalizedName = name?.trim();
     const normalizedDescription = description?.trim() || null;
     if (!normalizedName || normalizedName.length < 2 || normalizedName.length > 100) {
@@ -26,6 +26,7 @@ class Category {
     this.ownerId = ownerId;
     this.joinedByCurrentUser = Boolean(joinedByCurrentUser);
     this.favoriteByCurrentUser = Boolean(favoriteByCurrentUser);
+    this.mutedByCurrentUser = Boolean(mutedByCurrentUser);
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -39,6 +40,7 @@ class Category {
       ownerId: this.ownerId,
       joinedByCurrentUser: this.joinedByCurrentUser,
       favoriteByCurrentUser: this.favoriteByCurrentUser,
+      mutedByCurrentUser: this.mutedByCurrentUser,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };

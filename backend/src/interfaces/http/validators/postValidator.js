@@ -27,6 +27,9 @@ const createCommentSchema = z.object({
 }).strict();
 
 const updateCommentSchema = createCommentSchema.omit({ parentId: true });
+const voteSchema = z.object({ value: z.union([z.literal(-1), z.literal(0), z.literal(1)]) }).strict();
+const hiddenSchema = z.object({ hidden: z.boolean() }).strict();
+const mutedSchema = z.object({ muted: z.boolean() }).strict();
 const commentIdSchema = z.object({ id: z.uuid(), commentId: z.uuid() });
 
 const postIdSchema = z.object({ id: z.uuid('Mã bài viết không hợp lệ') });
@@ -35,7 +38,8 @@ const listPostsSchema = z.object({
   page: z.coerce.number().int().positive('Trang phải lớn hơn 0').optional(),
   limit: z.coerce.number().int().positive('Số bài mỗi trang phải lớn hơn 0').max(50, 'Tối đa 50 bài mỗi trang').optional(),
   categoryId: z.uuid('Chuyên mục không hợp lệ').optional(),
-  sort: z.enum(['latest', 'popular']).optional(),
+  feed: z.enum(['home', 'popular', 'all']).optional(),
+  sort: z.enum(['hot', 'new', 'top']).optional(),
 });
 const listCategoriesSchema = z.object({
   id: z.uuid('Chuyên mục không hợp lệ').optional(),
@@ -45,5 +49,8 @@ const listCategoriesSchema = z.object({
   joined: z.literal('true').optional(),
   favorites: z.literal('true').optional(),
 });
+const recommendationsSchema = z.object({
+  limit: z.coerce.number().int().positive().max(20).optional().default(5),
+});
 
-module.exports = { createPostSchema, updatePostSchema, createCommentSchema, updateCommentSchema, commentIdSchema, postIdSchema, categoryIdSchema, listPostsSchema, listCategoriesSchema };
+module.exports = { createPostSchema, updatePostSchema, createCommentSchema, updateCommentSchema, voteSchema, hiddenSchema, mutedSchema, commentIdSchema, postIdSchema, categoryIdSchema, listPostsSchema, listCategoriesSchema, recommendationsSchema };

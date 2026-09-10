@@ -15,7 +15,7 @@ const PostgresUserRepository = require('../../../src/infrastructure/database/pos
 const PostgresPostRepository = require('../../../src/infrastructure/database/postgres/repositories/PostgresPostRepository');
 const PostgresCommentRepository = require('../../../src/infrastructure/database/postgres/repositories/PostgresCommentRepository');
 const PostgresCategoryRepository = require('../../../src/infrastructure/database/postgres/repositories/PostgresCategoryRepository');
-const PostgresLikeRepository = require('../../../src/infrastructure/database/postgres/repositories/PostgresLikeRepository');
+const PostgresVoteRepository = require('../../../src/infrastructure/database/postgres/repositories/PostgresVoteRepository');
 
 const describeIntegration = shouldRun ? describe : describe.skip;
 
@@ -34,11 +34,11 @@ describeIntegration('PostgreSQL repositories', () => {
   const posts = new PostgresPostRepository();
   const comments = new PostgresCommentRepository();
   const categories = new PostgresCategoryRepository();
-  const likes = new PostgresLikeRepository();
+  const votes = new PostgresVoteRepository();
 
   beforeAll(async () => { await applyMigrations(); });
   beforeEach(async () => {
-    await pool.query('TRUNCATE community_memberships, likes, comments, posts, categories, password_reset_tokens, refresh_tokens, users CASCADE');
+    await pool.query('TRUNCATE community_memberships, post_votes, comment_votes, comments, posts, categories, password_reset_tokens, refresh_tokens, users CASCADE');
   });
   afterAll(async () => { await pool.end(); });
 
@@ -52,7 +52,7 @@ describeIntegration('PostgreSQL repositories', () => {
     expect(await users.countByStatus()).toMatchObject({ total: 1, active: 0, locked: 1 });
   });
 
-  test('lưu và truy vấn đầy đủ chuyên mục, bài viết, bình luận và lượt thích', async () => {
+  test('lưu và truy vấn đầy đủ chuyên mục, bài viết, bình luận và vote', async () => {
     const author = await users.create(new User({
       username: 'repository_author', email: 'author@example.com', passwordHash: 'hashed-password', fullName: 'Tác giả',
     }));
@@ -65,10 +65,12 @@ describeIntegration('PostgreSQL repositories', () => {
       authorId: author.id, categoryId: category.id, title: 'Bài viết kiểm thử repository', content: 'Nội dung được lưu trực tiếp vào PostgreSQL thật.',
     }));
     const comment = await comments.create(new Comment({ postId: post.id, authorId: author.id, content: 'Bình luận tích hợp.' }));
-    await likes.create(post.id, author.id);
+    await votes.setPostVote(post.id, author.id, 1);
+    await votes.setCommentVote(comment.id, author.id, -1);
 
     const detail = await posts.findById(post.id, author.id);
-    expect(detail).toMatchObject({ likeCount: 1, commentCount: 1, likedByCurrentUser: true });
+    expect(detail).toMatchObject({ score: 1, commentCount: 1, viewerVote: 1 });
+    expect((await comments.listByPost(post.id, author.id))[0]).toMatchObject({ score: -1, viewerVote: -1 });
     expect((await posts.list({ page: 1, limit: 10, categoryId: category.id, viewerId: author.id })).total).toBe(1);
     expect((await posts.listAll({ page: 1, limit: 10, search: 'repository', status: 'published' })).total).toBe(1);
     expect((await comments.listAll({ page: 1, limit: 10, search: 'tích hợp', status: 'visible' })).items[0].post.title).toBe(post.title);
@@ -79,7 +81,6 @@ describeIntegration('PostgreSQL repositories', () => {
     expect(await comments.countByStatus()).toMatchObject({ total: 1, visible: 0, removed: 1 });
     await categories.update(category.id, new Category({ ...category.toJSON(), name: 'Kiểm thử cập nhật' }));
     expect((await categories.findByName('kiểm thử cập nhật')).id).toBe(category.id);
-    await likes.remove(post.id, author.id);
-    expect(await likes.countByPost(post.id)).toBe(0);
+    expect(await votes.setPostVote(post.id, author.id, 0)).toEqual({ score: 0, viewerVote: 0 });
   });
 });

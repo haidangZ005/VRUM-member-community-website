@@ -10,6 +10,7 @@ const memberListSchema = z.object({
 
 const postModerationListSchema = memberListSchema.extend({ status: z.enum(['published', 'removed']).optional() });
 const commentModerationListSchema = memberListSchema.extend({ status: z.enum(['visible', 'removed']).optional() });
+const moderationSchema = z.object({ reason: z.string().trim().min(5, 'Lý do phải có ít nhất 5 ký tự').max(500, 'Lý do tối đa 500 ký tự') }).strict();
 
 const categorySchema = z.object({
   name: z.string().trim().min(2, 'Tên chuyên mục phải có ít nhất 2 ký tự').max(100, 'Tên chuyên mục tối đa 100 ký tự'),
@@ -17,4 +18,4 @@ const categorySchema = z.object({
   avatarUrl: z.string().max(90000, 'Ảnh đại diện quá lớn').nullable().optional(),
 }).strict();
 
-module.exports = { idParamSchema, memberListSchema, postModerationListSchema, commentModerationListSchema, categorySchema };
+module.exports = { idParamSchema, memberListSchema, postModerationListSchema, commentModerationListSchema, moderationSchema, categorySchema };

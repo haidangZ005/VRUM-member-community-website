@@ -61,7 +61,33 @@ export function useCommunityActions() {
   return {
     membership: useMutation({ mutationFn: postApi.setCategoryJoined, onSuccess: refresh }),
     favorite: useMutation({ mutationFn: postApi.setCategoryFavorite, onSuccess: refresh }),
+    mute: useMutation({ mutationFn: postApi.setCategoryMuted, onSuccess: (_, { id }) => {
+      refresh();
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['recommended-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['category', id] });
+    } }),
   };
+}
+
+export function useRecommendedCategories(limit = 5) {
+  const { isInitialized, user } = useAuthStore();
+  return useQuery({ queryKey: ['recommended-categories', limit, user?.id], queryFn: () => postApi.recommendedCategories(limit), enabled: isInitialized && Boolean(user), staleTime: 5 * 60 * 1000 });
+}
+
+export function useFeedActions() {
+  const queryClient = useQueryClient();
+  const refreshFeeds = () => queryClient.invalidateQueries({ queryKey: ['posts'] });
+  return {
+    hide: useMutation({ mutationFn: postApi.setHidden, onSuccess: refreshFeeds }),
+    notInterested: useMutation({ mutationFn: postApi.markNotInterested, onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recommended-categories'] });
+    } }),
+  };
+}
+
+export function useRecordPostView() {
+  return useMutation({ mutationFn: postApi.recordView });
 }
 
 export function useCreatePost({ stayOnFeed = false } = {}) {
@@ -102,13 +128,13 @@ export function useDeletePost() {
   });
 }
 
-export function useToggleLike(post) {
+export function useSetPostVote(post) {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   return useMutation({
-    mutationFn: () => (post.likedByCurrentUser ? postApi.unlike(post.id) : postApi.like(post.id)),
-    onSuccess: ({ liked, likeCount }) => {
-      queryClient.setQueryData(['post', post.id, user?.id || 'guest'], (current) => current ? { ...current, likedByCurrentUser: liked, likeCount } : current);
+    mutationFn: (value) => postApi.vote({ id: post.id, value }),
+    onSuccess: ({ score, viewerVote }) => {
+      queryClient.setQueryData(['post', post.id, user?.id || 'guest'], (current) => current ? { ...current, score, viewerVote } : current);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });

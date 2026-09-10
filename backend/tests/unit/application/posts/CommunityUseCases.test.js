@@ -42,19 +42,24 @@ describe('Sprint 2 community use cases', () => {
     expect(updated.title).toBe('Xây dựng cộng đồng cùng nhau');
   });
 
-  test('thích/bỏ thích không tạo bản ghi trùng và tạo bình luận', async () => {
+  test('vote bài và bình luận dùng trạng thái đích, không tạo bản ghi trùng', async () => {
     const post = await useCases.createPost.execute(author.id, {
       title: 'Một câu hỏi dành cho mọi người',
       content: 'Theo bạn điều gì khiến một cuộc thảo luận trở nên có giá trị?',
       categoryId: category.id,
     });
-    expect(await useCases.likePost.execute(post.id, author.id)).toEqual({ liked: true, likeCount: 1 });
-    expect(await useCases.likePost.execute(post.id, author.id)).toEqual({ liked: true, likeCount: 1 });
+    expect(await useCases.setPostVote.execute(post.id, author.id, 1)).toEqual({ score: 1, viewerVote: 1 });
+    expect(await useCases.setPostVote.execute(post.id, author.id, 1)).toEqual({ score: 1, viewerVote: 1 });
+    expect(await useCases.setPostVote.execute(post.id, author.id, -1)).toEqual({ score: -1, viewerVote: -1 });
 
     const comment = await useCases.createComment.execute(post.id, author.id, { content: 'Sự chân thành và lắng nghe.' });
     expect(comment.content).toContain('chân thành');
-    expect(await useCases.listCommentsByPost.execute(post.id, author.id)).toHaveLength(1);
-    expect(await useCases.unlikePost.execute(post.id, author.id)).toEqual({ liked: false, likeCount: 0 });
+    expect(await useCases.setCommentVote.execute(post.id, comment.id, author.id, 1)).toEqual({ score: 1, viewerVote: 1 });
+    expect(await useCases.setCommentVote.execute(post.id, comment.id, author.id, 1)).toEqual({ score: 1, viewerVote: 1 });
+    expect(await useCases.setCommentVote.execute(post.id, comment.id, author.id, -1)).toEqual({ score: -1, viewerVote: -1 });
+    expect(await useCases.setCommentVote.execute(post.id, comment.id, author.id, 0)).toEqual({ score: 0, viewerVote: 0 });
+    expect((await useCases.listCommentsByPost.execute(post.id, author.id))[0]).toMatchObject({ score: 0, viewerVote: 0 });
+    expect(await useCases.setPostVote.execute(post.id, author.id, 0)).toEqual({ score: 0, viewerVote: 0 });
   });
 
   test('chỉ tác giả được sửa hoặc xóa bài viết', async () => {
@@ -84,5 +89,25 @@ describe('Sprint 2 community use cases', () => {
     const feed = await useCases.listPosts.execute({ page: 1, limit: 10, viewerId: author.id });
     expect(feed.data).toHaveLength(2);
     expect(new Set(feed.data.map((post) => post.categoryId))).toEqual(new Set(categories.map((item) => item.id)));
+  });
+
+  test('Home ưu tiên cộng đồng đã tham gia và tôn trọng hide, not-interested, mute', async () => {
+    const categories = await dependencies.categoryRepository.list();
+    await dependencies.categoryRepository.join(categories[0].id, author.id);
+    const joinedPost = await useCases.createPost.execute(author.id, { title: 'Bài trong cộng đồng đã tham gia', content: 'Nội dung dành cho bảng tin Home của thành viên.', categoryId: categories[0].id });
+    const suggestedPost = await useCases.createPost.execute(author.id, { title: 'Bài gợi ý từ cộng đồng khác', content: 'Nội dung được dùng để kiểm tra cơ chế đề xuất.', categoryId: categories[1].id });
+
+    const home = await useCases.listPosts.execute({ feed: 'home', viewerId: author.id });
+    expect(home.data.map((post) => post.id)).toEqual([joinedPost.id, suggestedPost.id]);
+
+    await useCases.recordPostView.execute(joinedPost.id, author.id);
+    await useCases.setPostHidden.execute(joinedPost.id, author.id, true);
+    await useCases.markPostNotInterested.execute(suggestedPost.id, author.id);
+    expect((await useCases.listPosts.execute({ feed: 'home', viewerId: author.id })).data).toHaveLength(0);
+
+    await useCases.setPostHidden.execute(joinedPost.id, author.id, false);
+    await dependencies.categoryRepository.setMuted(categories[0].id, author.id, true);
+    expect((await useCases.listPosts.execute({ feed: 'popular', viewerId: author.id })).data.map((post) => post.id)).toEqual([suggestedPost.id]);
+    expect(await dependencies.categoryRepository.listRecommended(author.id)).toHaveLength(0);
   });
 });

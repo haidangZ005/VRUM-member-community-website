@@ -18,3 +18,13 @@ export function useCommentMutation(postId, action = 'create') {
     },
   });
 }
+
+export function useSetCommentVote(postId, commentId) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (value) => commentApi.vote({ postId, id: commentId, value }),
+    onSuccess: ({ score, viewerVote }) => {
+      queryClient.setQueriesData({ queryKey: ['comments', postId] }, (comments) => comments?.map((comment) => comment.id === commentId ? { ...comment, score, viewerVote } : comment));
+    },
+  });
+}
