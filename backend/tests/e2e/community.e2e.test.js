@@ -19,7 +19,7 @@ describe('Community API', () => {
     authorization = `Bearer ${login.body.data.accessToken}`;
   });
 
-  test('tạo → đọc → sửa → thích → bình luận → xóa bài viết', async () => {
+  test('tạo → đọc → sửa → vote → bình luận → xóa bài viết', async () => {
     const categories = await agent.get('/api/posts/categories').set('Authorization', authorization).expect(200);
     const created = await agent.post('/api/posts').set('Authorization', authorization).send({
       title: 'Cùng xây một không gian chia sẻ',
@@ -34,10 +34,15 @@ describe('Community API', () => {
     });
     await agent.get(`/api/posts/${postId}`).set('Authorization', authorization).expect(200);
     await agent.put(`/api/posts/${postId}`).set('Authorization', authorization).send({ title: 'Cùng xây không gian chia sẻ tốt hơn' }).expect(200);
-    await agent.post(`/api/posts/${postId}/like`).set('Authorization', authorization).expect(200).expect(({ body }) => expect(body.data.likeCount).toBe(1));
-    await agent.post(`/api/posts/${postId}/comments`).set('Authorization', authorization).send({ content: 'Mình rất đồng tình với ý tưởng này.' }).expect(201);
-    await agent.get(`/api/posts/${postId}/comments`).set('Authorization', authorization).expect(200).expect(({ body }) => expect(body.data).toHaveLength(1));
-    await agent.delete(`/api/posts/${postId}/like`).set('Authorization', authorization).expect(200).expect(({ body }) => expect(body.data.likeCount).toBe(0));
+    await agent.put(`/api/posts/${postId}/votes`).set('Authorization', authorization).send({ value: 1 }).expect(200)
+      .expect(({ body }) => expect(body.data).toEqual({ score: 1, viewerVote: 1 }));
+    const comment = await agent.post(`/api/posts/${postId}/comments`).set('Authorization', authorization).send({ content: 'Mình rất đồng tình với ý tưởng này.' }).expect(201);
+    await agent.put(`/api/posts/${postId}/comments/${comment.body.data.id}/votes`).set('Authorization', authorization).send({ value: -1 }).expect(200)
+      .expect(({ body }) => expect(body.data).toEqual({ score: -1, viewerVote: -1 }));
+    await agent.get(`/api/posts/${postId}/comments`).set('Authorization', authorization).expect(200)
+      .expect(({ body }) => expect(body.data[0]).toMatchObject({ score: -1, viewerVote: -1 }));
+    await agent.put(`/api/posts/${postId}/votes`).set('Authorization', authorization).send({ value: 0 }).expect(200)
+      .expect(({ body }) => expect(body.data).toEqual({ score: 0, viewerVote: 0 }));
     await agent.delete(`/api/posts/${postId}`).set('Authorization', authorization).expect(200);
     await agent.get(`/api/posts/${postId}`).set('Authorization', authorization).expect(404);
   });
@@ -67,15 +72,15 @@ describe('Community API', () => {
     const postId = created.body.data.id;
     const comment = await agent.post(`/api/posts/${postId}/comments`).set('Authorization', authorization)
       .send({ content: 'Bình luận công khai để khách đọc.' }).expect(201);
-    await agent.post(`/api/posts/${postId}/like`).set('Authorization', authorization).expect(200);
+    await agent.put(`/api/posts/${postId}/votes`).set('Authorization', authorization).send({ value: 1 }).expect(200);
 
     await request(app).get(`/api/posts/${postId}`).expect(200)
-      .expect(({ body }) => expect(body.data.likedByCurrentUser).toBe(false));
+      .expect(({ body }) => expect(body.data.viewerVote).toBe(0));
     await agent.get(`/api/posts/${postId}`).set('Authorization', authorization).expect(200)
-      .expect(({ body }) => expect(body.data.likedByCurrentUser).toBe(true));
+      .expect(({ body }) => expect(body.data.viewerVote).toBe(1));
     await request(app).get(`/api/posts/${postId}/comments`).expect(200)
       .expect(({ body }) => expect(body.data).toHaveLength(1));
-    await request(app).post(`/api/posts/${postId}/like`).expect(401);
+    await request(app).put(`/api/posts/${postId}/votes`).send({ value: 1 }).expect(401);
     await request(app).post(`/api/posts/${postId}/comments`)
       .send({ content: 'Guest không được bình luận.' }).expect(401);
     await request(app).post(`/api/posts/${postId}/comments`)
@@ -155,7 +160,7 @@ describe('Community API', () => {
       .send({ title: 'Bài viết thứ nhất', content: 'Nội dung bài viết thứ nhất trong cộng đồng.', categoryId: community.body.data.id }).expect(201);
     await agent.post('/api/posts').set('Authorization', authorization)
       .send({ title: 'Bài viết thứ hai', content: 'Nội dung bài viết thứ hai trong cộng đồng.', categoryId: community.body.data.id }).expect(201);
-    await agent.post(`/api/posts/${first.body.data.id}/like`).set('Authorization', authorization).expect(200);
+    await agent.put(`/api/posts/${first.body.data.id}/votes`).set('Authorization', authorization).send({ value: 1 }).expect(200);
 
     await agent.get('/api/posts').query({ sort: 'popular' }).set('Authorization', authorization).expect(200)
       .expect(({ body }) => expect(body.data[0].id).toBe(first.body.data.id));

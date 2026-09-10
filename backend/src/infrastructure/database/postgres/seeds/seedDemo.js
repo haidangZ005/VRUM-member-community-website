@@ -92,8 +92,8 @@ async function seedDemo() {
     );
 
     await client.query(
-      `INSERT INTO likes (post_id, user_id) VALUES
-       ($1, $4), ($1, $5), ($2, $6), ($3, $4)
+      `INSERT INTO post_votes (post_id, user_id, value) VALUES
+       ($1, $4, 1), ($1, $5, 1), ($2, $6, 1), ($3, $4, 1)
        ON CONFLICT (post_id, user_id) DO NOTHING`,
       [postIds[0], postIds[1], postIds[2], userIds.get(members[1].email), userIds.get(members[2].email), userIds.get(members[0].email)],
     );

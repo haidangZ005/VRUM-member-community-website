@@ -12,11 +12,11 @@ const ListPosts = require('../../application/use-cases/posts/ListPosts');
 const GetPostDetail = require('../../application/use-cases/posts/GetPostDetail');
 const EditPost = require('../../application/use-cases/posts/EditPost');
 const DeletePost = require('../../application/use-cases/posts/DeletePost');
-const LikePost = require('../../application/use-cases/posts/LikePost');
-const UnlikePost = require('../../application/use-cases/posts/UnlikePost');
+const SetPostVote = require('../../application/use-cases/posts/SetPostVote');
 const CreateComment = require('../../application/use-cases/comments/CreateComment');
 const EditComment = require('../../application/use-cases/comments/EditComment');
 const ListCommentsByPost = require('../../application/use-cases/comments/ListCommentsByPost');
+const SetCommentVote = require('../../application/use-cases/comments/SetCommentVote');
 const ListMembers = require('../../application/use-cases/admin/ListMembers');
 const LockMemberAccount = require('../../application/use-cases/admin/LockMemberAccount');
 const UnlockMemberAccount = require('../../application/use-cases/admin/UnlockMemberAccount');
@@ -33,7 +33,7 @@ const GetDashboardStats = require('../../application/use-cases/admin/GetDashboar
 function makeUseCases(dependencies) {
   const {
     userRepository, refreshTokenRepository, resetTokenRepository, hashService, tokenService, emailService,
-    postRepository, commentRepository, likeRepository, categoryRepository,
+    postRepository, commentRepository, voteRepository, categoryRepository,
   } = dependencies;
   return {
     registerUser: new RegisterUser({ userRepository, hashService }),
@@ -49,11 +49,11 @@ function makeUseCases(dependencies) {
     getPostDetail: new GetPostDetail({ postRepository }),
     editPost: new EditPost({ postRepository, categoryRepository }),
     deletePost: new DeletePost({ postRepository }),
-    likePost: new LikePost({ postRepository, likeRepository }),
-    unlikePost: new UnlikePost({ postRepository, likeRepository }),
+    setPostVote: new SetPostVote({ postRepository, voteRepository }),
     createComment: new CreateComment({ postRepository, commentRepository }),
     editComment: new EditComment({ postRepository, commentRepository }),
     listCommentsByPost: new ListCommentsByPost({ postRepository, commentRepository }),
+    setCommentVote: new SetCommentVote({ postRepository, commentRepository, voteRepository }),
     listMembers: new ListMembers({ userRepository }),
     lockMemberAccount: new LockMemberAccount({ userRepository, refreshTokenRepository }),
     unlockMemberAccount: new UnlockMemberAccount({ userRepository }),

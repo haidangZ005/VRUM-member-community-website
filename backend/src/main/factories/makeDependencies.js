@@ -6,7 +6,7 @@ const JwtTokenService = require('../../infrastructure/services/JwtTokenService')
 const NodemailerEmailService = require('../../infrastructure/services/NodemailerEmailService');
 const PostgresPostRepository = require('../../infrastructure/database/postgres/repositories/PostgresPostRepository');
 const PostgresCommentRepository = require('../../infrastructure/database/postgres/repositories/PostgresCommentRepository');
-const PostgresLikeRepository = require('../../infrastructure/database/postgres/repositories/PostgresLikeRepository');
+const PostgresVoteRepository = require('../../infrastructure/database/postgres/repositories/PostgresVoteRepository');
 const PostgresCategoryRepository = require('../../infrastructure/database/postgres/repositories/PostgresCategoryRepository');
 
 function makeDependencies() {
@@ -19,7 +19,7 @@ function makeDependencies() {
     emailService: new NodemailerEmailService(),
     postRepository: new PostgresPostRepository(),
     commentRepository: new PostgresCommentRepository(),
-    likeRepository: new PostgresLikeRepository(),
+    voteRepository: new PostgresVoteRepository(),
     categoryRepository: new PostgresCategoryRepository(),
   };
 }

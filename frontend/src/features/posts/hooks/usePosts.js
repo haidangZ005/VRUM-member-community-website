@@ -95,13 +95,13 @@ export function useDeletePost() {
   });
 }
 
-export function useToggleLike(post) {
+export function useSetPostVote(post) {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   return useMutation({
-    mutationFn: () => (post.likedByCurrentUser ? postApi.unlike(post.id) : postApi.like(post.id)),
-    onSuccess: ({ liked, likeCount }) => {
-      queryClient.setQueryData(['post', post.id, user?.id || 'guest'], (current) => current ? { ...current, likedByCurrentUser: liked, likeCount } : current);
+    mutationFn: (value) => postApi.vote({ id: post.id, value }),
+    onSuccess: ({ score, viewerVote }) => {
+      queryClient.setQueryData(['post', post.id, user?.id || 'guest'], (current) => current ? { ...current, score, viewerVote } : current);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
   });

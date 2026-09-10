@@ -27,6 +27,7 @@ const createCommentSchema = z.object({
 }).strict();
 
 const updateCommentSchema = createCommentSchema.omit({ parentId: true });
+const voteSchema = z.object({ value: z.union([z.literal(-1), z.literal(0), z.literal(1)]) }).strict();
 const commentIdSchema = z.object({ id: z.uuid(), commentId: z.uuid() });
 
 const postIdSchema = z.object({ id: z.uuid('Mã bài viết không hợp lệ') });
@@ -46,4 +47,4 @@ const listCategoriesSchema = z.object({
   favorites: z.literal('true').optional(),
 });
 
-module.exports = { createPostSchema, updatePostSchema, createCommentSchema, updateCommentSchema, commentIdSchema, postIdSchema, categoryIdSchema, listPostsSchema, listCategoriesSchema };
+module.exports = { createPostSchema, updatePostSchema, createCommentSchema, updateCommentSchema, voteSchema, commentIdSchema, postIdSchema, categoryIdSchema, listPostsSchema, listCategoriesSchema };

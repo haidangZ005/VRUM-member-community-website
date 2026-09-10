@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MessageSquare, Send, Pencil, Reply, Trash2 } from 'lucide-react';
-import { useComments, useCommentMutation } from '../hooks/useComments';
+import { useComments, useCommentMutation, useSetCommentVote } from '../hooks/useComments';
 import { useAuthStore } from '../../../store/authStore';
 import ImageAttachments, { AttachedImages } from '../../../components/ui/ImageAttachments';
+import VoteControl from '../../../components/ui/VoteControl';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
 const errorMessage = (error) => error?.response?.data?.error?.message || 'Không thể lưu bình luận. Vui lòng thử lại.';
@@ -31,7 +32,9 @@ function CommentComposer({ postId, comment, parentId, onDone, onCancel }) {
 
 function CommentItem({ postId, comment, childrenByParent, userId, loginState, replyTo, clearReplyIntent }) {
   const [mode, setMode] = useState(userId && comment.id === replyTo ? 'reply' : null);
+  const navigate = useNavigate();
   const remove = useCommentMutation(postId, 'remove');
+  const vote = useSetCommentVote(postId, comment.id);
   const name = comment.author?.fullName || comment.author?.username || 'Thành viên';
   return <div className="comment-thread">
     <article className="comment-item" id={`comment-${comment.id}`}>
@@ -40,6 +43,7 @@ function CommentItem({ postId, comment, childrenByParent, userId, loginState, re
         {mode === 'edit' ? <CommentComposer postId={postId} comment={comment} onDone={() => setMode(null)} onCancel={() => setMode(null)} /> : <p>{comment.content}</p>}
         {mode !== 'edit' && <AttachedImages images={comment.images} />}
         <div className="comment-actions">
+          <VoteControl score={comment.score} viewerVote={comment.viewerVote} compact pending={vote.isPending} label="Bình chọn bình luận" onVote={(value) => { if (userId) vote.mutate(value); else navigate('/login', { state: { from: `${loginState.fromBase}#comment-${comment.id}` } }); }} />
           {userId ? <button type="button" onClick={() => setMode(mode === 'reply' ? null : 'reply')} disabled={remove.isPending}><Reply size={15} /> Trả lời</button> : <Link to="/login" state={{ from: `${loginState.fromBase}${loginState.fromBase.includes('?') ? '&' : '?'}replyTo=${encodeURIComponent(comment.id)}#comment-${comment.id}` }}><Reply size={15} /> Đăng nhập để trả lời</Link>}
           {comment.authorId === userId && <><button type="button" onClick={() => setMode('edit')} disabled={remove.isPending}><Pencil size={15} /> Sửa</button><button type="button" disabled={remove.isPending} onClick={() => { if (window.confirm('Xóa bình luận này? Các câu trả lời vẫn được giữ lại.')) remove.mutate({ id: comment.id }); }}><Trash2 size={15} />{remove.isPending ? 'Đang xóa…' : 'Xóa'}</button></>}
         </div>

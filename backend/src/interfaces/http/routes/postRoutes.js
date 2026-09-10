@@ -1,7 +1,7 @@
 const express = require('express');
 const asyncHandler = require('../../../shared/utils/asyncHandler');
 const validateRequest = require('../middlewares/validateRequest');
-const { createPostSchema, updatePostSchema, createCommentSchema, postIdSchema, categoryIdSchema, listPostsSchema, listCategoriesSchema } = require('../validators/postValidator');
+const { createPostSchema, updatePostSchema, createCommentSchema, voteSchema, postIdSchema, categoryIdSchema, listPostsSchema, listCategoriesSchema } = require('../validators/postValidator');
 const { categorySchema } = require('../validators/adminValidator');
 const { updateCommentSchema, commentIdSchema } = require('../validators/postValidator');
 
@@ -20,12 +20,12 @@ function makePostRoutes(controller, authMiddleware, optionalAuthMiddleware) {
   router.get('/:id', optionalAuthMiddleware, validateRequest(postIdSchema, 'params'), asyncHandler(controller.getById));
   router.put('/:id', authMiddleware, validateRequest(postIdSchema, 'params'), validateRequest(updatePostSchema), asyncHandler(controller.update));
   router.delete('/:id', authMiddleware, validateRequest(postIdSchema, 'params'), asyncHandler(controller.remove));
-  router.post('/:id/like', authMiddleware, validateRequest(postIdSchema, 'params'), asyncHandler(controller.like));
-  router.delete('/:id/like', authMiddleware, validateRequest(postIdSchema, 'params'), asyncHandler(controller.unlike));
+  router.put('/:id/votes', authMiddleware, validateRequest(postIdSchema, 'params'), validateRequest(voteSchema), asyncHandler(controller.setPostVote));
   router.get('/:id/comments', optionalAuthMiddleware, validateRequest(postIdSchema, 'params'), asyncHandler(controller.listComments));
   router.post('/:id/comments', authMiddleware, validateRequest(postIdSchema, 'params'), validateRequest(createCommentSchema), asyncHandler(controller.createComment));
   router.put('/:id/comments/:commentId', authMiddleware, validateRequest(commentIdSchema, 'params'), validateRequest(updateCommentSchema), asyncHandler(controller.updateComment));
   router.delete('/:id/comments/:commentId', authMiddleware, validateRequest(commentIdSchema, 'params'), asyncHandler(controller.deleteComment));
+  router.put('/:id/comments/:commentId/votes', authMiddleware, validateRequest(commentIdSchema, 'params'), validateRequest(voteSchema), asyncHandler(controller.setCommentVote));
   return router;
 }
 

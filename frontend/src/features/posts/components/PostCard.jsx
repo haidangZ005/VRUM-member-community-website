@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
-import LikeButton from './LikeButton';
+import PostVoteControl from './PostVoteControl';
 import { AttachedImages } from '../../../components/ui/ImageAttachments';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -20,7 +20,7 @@ export default function PostCard({ post }) {
         <AttachedImages images={post.images} />
       </Link>
       <footer className="post-card-footer">
-        <LikeButton post={post} compact />
+        <PostVoteControl post={post} compact />
         <Link className="comment-count" to={`/posts/${post.id}#comments`}><MessageSquare size={16} /> {post.commentCount} bình luận</Link>
         <Link className="read-link" to={`/posts/${post.id}`}>Đọc tiếp →</Link>
       </footer>

@@ -136,18 +136,28 @@ class MemoryCategoryRepository {
   async count() { return this.categories.length; }
 }
 
-class MemoryLikeRepository {
-  constructor() { this.likes = []; }
-  async create(postId, userId) {
-    if (!this.likes.some((like) => like.postId === postId && like.userId === userId)) this.likes.push({ postId, userId });
+class MemoryVoteRepository {
+  constructor() { this.votes = []; }
+  set(targetType, targetId, userId, value) {
+    this.votes = this.votes.filter((vote) => vote.targetType !== targetType || vote.targetId !== targetId || vote.userId !== userId);
+    if (value !== 0) this.votes.push({ targetType, targetId, userId, value });
+    return { score: this.score(targetType, targetId), viewerVote: value };
   }
-  async remove(postId, userId) { this.likes = this.likes.filter((like) => like.postId !== postId || like.userId !== userId); }
-  async countByPost(postId) { return this.likes.filter((like) => like.postId === postId).length; }
-  has(postId, userId) { return this.likes.some((like) => like.postId === postId && like.userId === userId); }
+  async setPostVote(postId, userId, value) { return this.set('post', postId, userId, value); }
+  async setCommentVote(commentId, userId, value) { return this.set('comment', commentId, userId, value); }
+  score(targetType, targetId) { return this.votes.filter((vote) => vote.targetType === targetType && vote.targetId === targetId).reduce((sum, vote) => sum + vote.value, 0); }
+  viewerVote(targetType, targetId, userId) { return this.votes.find((vote) => vote.targetType === targetType && vote.targetId === targetId && vote.userId === userId)?.value || 0; }
 }
 
 class MemoryCommentRepository {
-  constructor(userRepository) { this.comments = []; this.userRepository = userRepository; }
+  constructor(userRepository, voteRepository) { this.comments = []; this.userRepository = userRepository; this.voteRepository = voteRepository; }
+  hydrate(comment, viewerId = null) {
+    return new Comment({
+      ...comment.toJSON(),
+      score: this.voteRepository.score('comment', comment.id),
+      viewerVote: viewerId ? this.voteRepository.viewerVote('comment', comment.id, viewerId) : 0,
+    });
+  }
   async create(comment) {
     const user = await this.userRepository.findById(comment.authorId);
     const post = this.postRepository?.posts.find((item) => item.id === comment.postId);
@@ -160,9 +170,9 @@ class MemoryCommentRepository {
       updatedAt: new Date(),
     });
     this.comments.push(created);
-    return created;
+    return this.hydrate(created, comment.authorId);
   }
-  async listByPost(postId) { return this.comments.filter((comment) => comment.postId === postId && comment.status === 'visible'); }
+  async listByPost(postId, viewerId = null) { return this.comments.filter((comment) => comment.postId === postId && comment.status === 'visible').map((comment) => this.hydrate(comment, viewerId)); }
   countByPost(postId) { return this.comments.filter((comment) => comment.postId === postId && comment.status === 'visible').length; }
   async findById(id) { return this.comments.find((comment) => comment.id === id) || null; }
   async listAll({ page, limit, search, status }) {
@@ -178,11 +188,11 @@ class MemoryCommentRepository {
 }
 
 class MemoryPostRepository {
-  constructor(userRepository, categoryRepository, likeRepository, commentRepository) {
+  constructor(userRepository, categoryRepository, voteRepository, commentRepository) {
     this.posts = [];
     this.userRepository = userRepository;
     this.categoryRepository = categoryRepository;
-    this.likeRepository = likeRepository;
+    this.voteRepository = voteRepository;
     this.commentRepository = commentRepository;
   }
   async hydrate(post, viewerId = null) {
@@ -192,9 +202,9 @@ class MemoryPostRepository {
       ...post,
       author: user ? { id: user.id, username: user.username, fullName: user.fullName, avatarUrl: user.avatarUrl } : null,
       category: category ? { id: category.id, name: category.name } : null,
-      likeCount: await this.likeRepository.countByPost(post.id),
+      score: this.voteRepository.score('post', post.id),
       commentCount: this.commentRepository.countByPost(post.id),
-      likedByCurrentUser: viewerId ? this.likeRepository.has(post.id, viewerId) : false,
+      viewerVote: viewerId ? this.voteRepository.viewerVote('post', post.id, viewerId) : 0,
     });
   }
   async create(post) {
@@ -204,7 +214,7 @@ class MemoryPostRepository {
   }
   async list({ page, limit, categoryId, viewerId, sort = 'latest' }) {
     const filtered = this.posts.filter((post) => post.status === 'published' && (!categoryId || post.categoryId === categoryId));
-    if (sort === 'popular') filtered.sort((a, b) => this.likeRepository.likes.filter((like) => like.postId === b.id).length - this.likeRepository.likes.filter((like) => like.postId === a.id).length);
+    if (sort === 'popular') filtered.sort((a, b) => this.voteRepository.score('post', b.id) - this.voteRepository.score('post', a.id));
     const pageItems = filtered.slice((page - 1) * limit, page * limit);
     return { items: await Promise.all(pageItems.map((post) => this.hydrate(post, viewerId))), total: filtered.length };
   }
@@ -233,9 +243,9 @@ class MemoryPostRepository {
 function makeFakeDependencies() {
   const userRepository = new MemoryUserRepository();
   const categoryRepository = new MemoryCategoryRepository();
-  const likeRepository = new MemoryLikeRepository();
-  const commentRepository = new MemoryCommentRepository(userRepository);
-  const postRepository = new MemoryPostRepository(userRepository, categoryRepository, likeRepository, commentRepository);
+  const voteRepository = new MemoryVoteRepository();
+  const commentRepository = new MemoryCommentRepository(userRepository, voteRepository);
+  const postRepository = new MemoryPostRepository(userRepository, categoryRepository, voteRepository, commentRepository);
   commentRepository.postRepository = postRepository;
   return {
     userRepository,
@@ -247,7 +257,7 @@ function makeFakeDependencies() {
     categoryRepository,
     postRepository,
     commentRepository,
-    likeRepository,
+    voteRepository,
   };
 }
 

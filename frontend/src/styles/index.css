@@ -217,6 +217,13 @@ button, input, textarea, select { font: inherit; }
 .reaction-button { padding: 8px 10px; border-radius: 9px; }
 .reaction-button:hover, .reaction-button.liked { color: #ffffff; background: #090909; }
 .reaction-button.compact .reaction-label { display: none; }
+.vote-control { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--vrum-border); border-radius: 999px; background: var(--vrum-surface); overflow: hidden; }
+.vote-control button { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border: 0; background: transparent; color: #787878; cursor: pointer; }
+.vote-control button:hover:not(:disabled), .vote-control button.selected.up { color: #e64800; background: #fff2ec; }
+.vote-control button.selected.down { color: #5a55d6; background: #f0efff; }
+.vote-control button:disabled { opacity: .55; cursor: wait; }
+.vote-control > span { min-width: 24px; text-align: center; font-size: 13px; font-weight: 800; color: var(--vrum-ink); }
+.vote-control.compact button { width: 30px; height: 30px; }
 .read-link { margin-left: auto; font-size: 13px; }
 .feed-state { padding: 55px 24px; border: 1px dashed #d1d1d1; border-radius: 18px; color: #767676; text-align: center; background: #f9f9f9; }
 .empty-state { display: grid; justify-items: center; }

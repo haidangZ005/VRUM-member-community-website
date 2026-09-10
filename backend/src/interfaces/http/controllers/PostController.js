@@ -23,11 +23,8 @@ function makePostController(useCases, dependencies) {
     async remove(req, res) {
       return res.json({ data: await useCases.deletePost.execute(req.validatedParams.id, req.user.id) });
     },
-    async like(req, res) {
-      return res.json({ data: await useCases.likePost.execute(req.validatedParams.id, req.user.id) });
-    },
-    async unlike(req, res) {
-      return res.json({ data: await useCases.unlikePost.execute(req.validatedParams.id, req.user.id) });
+    async setPostVote(req, res) {
+      return res.json({ data: await useCases.setPostVote.execute(req.validatedParams.id, req.user.id, req.validatedBody.value) });
     },
     async listComments(req, res) {
       return res.json({ data: await useCases.listCommentsByPost.execute(req.validatedParams.id, req.user?.id) });
@@ -40,6 +37,9 @@ function makePostController(useCases, dependencies) {
     },
     async deleteComment(req, res) {
       return res.json({ data: await useCases.editComment.execute(req.validatedParams.id, req.validatedParams.commentId, req.user.id, null) });
+    },
+    async setCommentVote(req, res) {
+      return res.json({ data: await useCases.setCommentVote.execute(req.validatedParams.id, req.validatedParams.commentId, req.user.id, req.validatedBody.value) });
     },
     async listCategories(req, res) {
       const { id, search = '', limit, mine, joined, favorites } = req.validatedQuery;

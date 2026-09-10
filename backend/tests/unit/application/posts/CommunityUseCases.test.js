@@ -42,19 +42,24 @@ describe('Sprint 2 community use cases', () => {
     expect(updated.title).toBe('Xây dựng cộng đồng cùng nhau');
   });
 
-  test('thích/bỏ thích không tạo bản ghi trùng và tạo bình luận', async () => {
+  test('vote bài và bình luận dùng trạng thái đích, không tạo bản ghi trùng', async () => {
     const post = await useCases.createPost.execute(author.id, {
       title: 'Một câu hỏi dành cho mọi người',
       content: 'Theo bạn điều gì khiến một cuộc thảo luận trở nên có giá trị?',
       categoryId: category.id,
     });
-    expect(await useCases.likePost.execute(post.id, author.id)).toEqual({ liked: true, likeCount: 1 });
-    expect(await useCases.likePost.execute(post.id, author.id)).toEqual({ liked: true, likeCount: 1 });
+    expect(await useCases.setPostVote.execute(post.id, author.id, 1)).toEqual({ score: 1, viewerVote: 1 });
+    expect(await useCases.setPostVote.execute(post.id, author.id, 1)).toEqual({ score: 1, viewerVote: 1 });
+    expect(await useCases.setPostVote.execute(post.id, author.id, -1)).toEqual({ score: -1, viewerVote: -1 });
 
     const comment = await useCases.createComment.execute(post.id, author.id, { content: 'Sự chân thành và lắng nghe.' });
     expect(comment.content).toContain('chân thành');
-    expect(await useCases.listCommentsByPost.execute(post.id, author.id)).toHaveLength(1);
-    expect(await useCases.unlikePost.execute(post.id, author.id)).toEqual({ liked: false, likeCount: 0 });
+    expect(await useCases.setCommentVote.execute(post.id, comment.id, author.id, 1)).toEqual({ score: 1, viewerVote: 1 });
+    expect(await useCases.setCommentVote.execute(post.id, comment.id, author.id, 1)).toEqual({ score: 1, viewerVote: 1 });
+    expect(await useCases.setCommentVote.execute(post.id, comment.id, author.id, -1)).toEqual({ score: -1, viewerVote: -1 });
+    expect(await useCases.setCommentVote.execute(post.id, comment.id, author.id, 0)).toEqual({ score: 0, viewerVote: 0 });
+    expect((await useCases.listCommentsByPost.execute(post.id, author.id))[0]).toMatchObject({ score: 0, viewerVote: 0 });
+    expect(await useCases.setPostVote.execute(post.id, author.id, 0)).toEqual({ score: 0, viewerVote: 0 });
   });
 
   test('chỉ tác giả được sửa hoặc xóa bài viết', async () => {

@@ -18,9 +18,9 @@ function mapPost(row) {
       avatarUrl: row.author_avatar_url,
     } : null,
     category: row.category_id ? { id: row.category_id, name: row.category_name } : null,
-    likeCount: row.like_count,
+    score: row.score,
     commentCount: row.comment_count,
-    likedByCurrentUser: row.liked_by_current_user,
+    viewerVote: row.viewer_vote,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -29,9 +29,9 @@ function mapPost(row) {
 const baseSelect = `
   SELECT p.*, u.username AS author_username, u.full_name AS author_full_name,
     u.avatar_url AS author_avatar_url, c.name AS category_name,
-    (SELECT COUNT(*)::int FROM likes l WHERE l.post_id = p.id) AS like_count,
+    (SELECT COALESCE(SUM(v.value), 0)::int FROM post_votes v WHERE v.post_id = p.id) AS score,
     (SELECT COUNT(*)::int FROM comments cm WHERE cm.post_id = p.id AND cm.status = 'visible') AS comment_count,
-    EXISTS(SELECT 1 FROM likes mine WHERE mine.post_id = p.id AND mine.user_id = $1) AS liked_by_current_user
+    COALESCE((SELECT mine.value FROM post_votes mine WHERE mine.post_id = p.id AND mine.user_id = $1), 0)::int AS viewer_vote
   FROM posts p
   JOIN users u ON u.id = p.author_id
   LEFT JOIN categories c ON c.id = p.category_id`;
@@ -49,7 +49,7 @@ class PostgresPostRepository {
   async list({ page, limit, categoryId, viewerId, sort = 'latest' }) {
     const offset = (page - 1) * limit;
     const params = [viewerId, categoryId, limit, offset];
-    const orderBy = sort === 'popular' ? 'like_count DESC, comment_count DESC, p.created_at DESC' : 'p.created_at DESC';
+    const orderBy = sort === 'popular' ? 'score DESC, comment_count DESC, p.created_at DESC' : 'p.created_at DESC';
     const [itemsResult, countResult] = await Promise.all([
       pool.query(
         `${baseSelect}

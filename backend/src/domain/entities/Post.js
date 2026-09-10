@@ -12,9 +12,9 @@ class Post {
     status = 'published',
     author = null,
     category = null,
-    likeCount = 0,
+    score = 0,
     commentCount = 0,
-    likedByCurrentUser = false,
+    viewerVote = 0,
     createdAt,
     updatedAt,
   }) {
@@ -39,9 +39,9 @@ class Post {
     this.status = status;
     this.author = author;
     this.category = category;
-    this.likeCount = Number(likeCount) || 0;
+    this.score = Number(score) || 0;
     this.commentCount = Number(commentCount) || 0;
-    this.likedByCurrentUser = Boolean(likedByCurrentUser);
+    this.viewerVote = Number(viewerVote) || 0;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -57,9 +57,9 @@ class Post {
       status: this.status,
       author: this.author,
       category: this.category,
-      likeCount: this.likeCount,
+      score: this.score,
       commentCount: this.commentCount,
-      likedByCurrentUser: this.likedByCurrentUser,
+      viewerVote: this.viewerVote,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
