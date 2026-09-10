@@ -11,6 +11,7 @@ const makeUserController = require('../interfaces/http/controllers/UserControlle
 const makePostController = require('../interfaces/http/controllers/PostController');
 const makeAdminController = require('../interfaces/http/controllers/AdminController');
 const makeSearchController = require('../interfaces/http/controllers/SearchController');
+const makeNotificationController = require('../interfaces/http/controllers/NotificationController');
 const makeAuthMiddleware = require('../interfaces/http/middlewares/authMiddleware');
 const errorHandler = require('../interfaces/http/middlewares/errorHandler');
 const makeRoutes = require('../interfaces/http/routes');
@@ -36,6 +37,7 @@ function createApp(overrides = {}) {
     postController: makePostController(useCases, dependencies),
     adminController: makeAdminController(useCases),
     searchController: makeSearchController(useCases),
+    notificationController: makeNotificationController(useCases),
     authMiddleware,
     optionalAuthMiddleware,
   }));

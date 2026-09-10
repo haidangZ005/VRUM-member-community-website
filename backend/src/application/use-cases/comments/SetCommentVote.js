@@ -15,7 +15,8 @@ class SetCommentVote {
     if (!post || post.status !== 'published' || !comment || comment.postId !== postId || comment.status !== 'visible') {
       throw new NotFoundError('Không tìm thấy bình luận');
     }
-    return this.voteRepository.setCommentVote(commentId, userId, value);
+    const result = await this.voteRepository.setCommentVote(commentId, userId, value);
+    return { score: result.score, viewerVote: result.viewerVote };
   }
 }
 

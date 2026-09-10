@@ -40,8 +40,8 @@ describe('MVP journey', () => {
       expect(body.data.posts.published).toBe(1);
       expect(body.data.comments.visible).toBe(1);
     });
-    await admin.delete(`/api/admin/comments/${commentId}`).set('Authorization', adminAuth).expect(200);
-    await admin.delete(`/api/admin/posts/${postId}`).set('Authorization', adminAuth).expect(200);
+    await admin.delete(`/api/admin/comments/${commentId}`).set('Authorization', adminAuth).send({ reason: 'Vi phạm quy định cộng đồng' }).expect(200);
+    await admin.delete(`/api/admin/posts/${postId}`).set('Authorization', adminAuth).send({ reason: 'Vi phạm quy định cộng đồng' }).expect(200);
 
     await member.get(`/api/posts/${postId}`).set('Authorization', memberAuth).expect(404);
     await admin.get('/api/admin/comments?status=removed').set('Authorization', adminAuth).expect(200).expect(({ body }) => {

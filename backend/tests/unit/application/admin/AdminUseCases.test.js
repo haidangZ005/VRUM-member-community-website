@@ -48,8 +48,9 @@ describe('Sprint 3 admin use cases', () => {
     expect((await useCases.adminListPosts.execute()).data).toHaveLength(1);
     expect((await useCases.adminListComments.execute()).data).toHaveLength(1);
 
-    await useCases.adminDeletePost.execute(post.id);
-    await useCases.moderateComment.execute(comment.id);
+    const admin = await dependencies.userRepository.findByEmail('admin@example.com');
+    await useCases.adminDeletePost.execute(post.id, admin.id, 'Nội dung vi phạm quy định');
+    await useCases.moderateComment.execute(comment.id, admin.id, 'Bình luận vi phạm quy định');
     const stats = await useCases.getDashboardStats.execute();
     expect(stats).toMatchObject({
       members: { total: 1, active: 1, locked: 0 },

@@ -9,7 +9,7 @@ class MemoryUserRepository {
   constructor() { this.users = []; }
   async findById(id) { return this.users.find((user) => user.id === id) || null; }
   async findByEmail(email) { return this.users.find((user) => user.email === email) || null; }
-  async findByUsername(username) { return this.users.find((user) => user.username === username) || null; }
+  async findByUsername(username) { return this.users.find((user) => user.username.toLowerCase() === username.toLowerCase()) || null; }
   async create(user) {
     const created = new User({ ...user, id: crypto.randomUUID(), createdAt: new Date(), updatedAt: new Date() });
     this.users.push(created);
@@ -152,9 +152,10 @@ class MemoryCategoryRepository {
 class MemoryVoteRepository {
   constructor() { this.votes = []; }
   set(targetType, targetId, userId, value) {
+    const previousScore = this.score(targetType, targetId);
     this.votes = this.votes.filter((vote) => vote.targetType !== targetType || vote.targetId !== targetId || vote.userId !== userId);
     if (value !== 0) this.votes.push({ targetType, targetId, userId, value });
-    return { score: this.score(targetType, targetId), viewerVote: value };
+    return { previousScore, score: this.score(targetType, targetId), viewerVote: value };
   }
   async setPostVote(postId, userId, value) { return this.set('post', postId, userId, value); }
   async setCommentVote(commentId, userId, value) { return this.set('comment', commentId, userId, value); }
@@ -334,6 +335,42 @@ class MemorySearchRepository {
   }
 }
 
+class MemoryNotificationRepository {
+  constructor(categoryRepository) {
+    this.categoryRepository = categoryRepository;
+    this.notifications = [];
+    this.preferences = [];
+  }
+  async create(notification) {
+    if (!notification.recipientId || notification.recipientId === notification.actorId) return null;
+    const preference = this.preferences.find((item) => item.userId === notification.recipientId && item.type === notification.type);
+    if (notification.type !== 'CONTENT_MODERATED' && preference?.inAppEnabled === false) return null;
+    const ordinary = ['POST_COMMENT', 'COMMENT_REPLY', 'MENTION', 'POST_VOTE_MILESTONE'].includes(notification.type);
+    if (ordinary && notification.categoryId && this.categoryRepository.mutes.some((item) => item.userId === notification.recipientId && item.categoryId === notification.categoryId)) return null;
+    if (notification.dedupeKey && this.notifications.some((item) => item.dedupeKey === notification.dedupeKey)) return null;
+    const created = { id: crypto.randomUUID(), ...notification, actor: null, readAt: null, createdAt: new Date() };
+    this.notifications.push(created);
+    return created;
+  }
+  async list(recipientId, { page, limit, unreadOnly }) {
+    const filtered = this.notifications.filter((item) => item.recipientId === recipientId && (!unreadOnly || !item.readAt)).sort((a, b) => b.createdAt - a.createdAt);
+    return { items: filtered.slice((page - 1) * limit, page * limit), total: filtered.length };
+  }
+  async unreadCount(recipientId) { return this.notifications.filter((item) => item.recipientId === recipientId && !item.readAt).length; }
+  async markRead(id, recipientId) { const item = this.notifications.find((entry) => entry.id === id && entry.recipientId === recipientId); if (item && !item.readAt) item.readAt = new Date(); return item || null; }
+  async markAllRead(recipientId) { const unread = this.notifications.filter((item) => item.recipientId === recipientId && !item.readAt); unread.forEach((item) => { item.readAt = new Date(); }); return unread.length; }
+  async getPreferences(userId) {
+    return ['POST_COMMENT', 'COMMENT_REPLY', 'MENTION', 'POST_VOTE_MILESTONE'].map((type) => ({ type, inAppEnabled: this.preferences.find((item) => item.userId === userId && item.type === type)?.inAppEnabled ?? true }));
+  }
+  async updatePreferences(userId, preferences) {
+    for (const preference of preferences) {
+      this.preferences = this.preferences.filter((item) => item.userId !== userId || item.type !== preference.type);
+      this.preferences.push({ userId, ...preference });
+    }
+    return this.getPreferences(userId);
+  }
+}
+
 function makeFakeDependencies() {
   const userRepository = new MemoryUserRepository();
   const categoryRepository = new MemoryCategoryRepository();
@@ -342,6 +379,7 @@ function makeFakeDependencies() {
   const postRepository = new MemoryPostRepository(userRepository, categoryRepository, voteRepository, commentRepository);
   commentRepository.postRepository = postRepository;
   const searchRepository = new MemorySearchRepository({ postRepository, commentRepository, categoryRepository, userRepository, voteRepository });
+  const notificationRepository = new MemoryNotificationRepository(categoryRepository);
   return {
     userRepository,
     refreshTokenRepository: new MemoryRefreshTokenRepository(),
@@ -354,6 +392,8 @@ function makeFakeDependencies() {
     commentRepository,
     voteRepository,
     searchRepository,
+    notificationRepository,
+    unitOfWork: { run: (work) => work({ postRepository, commentRepository, voteRepository, notificationRepository }) },
   };
 }
 

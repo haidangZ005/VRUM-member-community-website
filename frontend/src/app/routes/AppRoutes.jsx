@@ -19,6 +19,7 @@ import PostModerationPage from '../../pages/admin/PostModerationPage';
 import CommentModerationPage from '../../pages/admin/CommentModerationPage';
 import CategoryManagementPage from '../../pages/admin/CategoryManagementPage';
 import SearchPage from '../../pages/search/SearchPage';
+import NotificationsPage from '../../pages/notifications/NotificationsPage';
 
 export default function AppRoutes() {
   const location = useLocation();
@@ -40,6 +41,7 @@ export default function AppRoutes() {
       <Route path="/communities/manage" element={<ProtectedRoute><ManageCommunitiesPage /></ProtectedRoute>} />
       <Route path="/posts/:id" element={<PostDetailPage />} />
       <Route path="/search" element={<SearchPage />} />
+      <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
       <Route path="/posts/:id/edit" element={<ProtectedRoute><PostEditorPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminRoute><AdminLayout /></AdminRoute></ProtectedRoute>}>
         <Route index element={<DashboardPage />} />

@@ -14,7 +14,9 @@ describe('Comment ownership and replies', () => {
         moderate: jest.fn(),
         create: jest.fn(async (comment) => comment),
       },
+      notificationPublisher: { commentCreated: jest.fn(), commentEdited: jest.fn() },
     };
+    dependencies.unitOfWork = { run: (work) => work({ ...dependencies, notificationRepository: { create: jest.fn() } }) };
   });
 
   test('author can edit and remove', async () => {

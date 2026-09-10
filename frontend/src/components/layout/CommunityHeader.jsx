@@ -5,6 +5,7 @@ import { useLogout } from '../../features/auth/hooks/useAuth';
 import { useAuthStore } from '../../store/authStore';
 import ThemeSwitcher from '../ui/ThemeSwitcher';
 import BrandLogo from '../ui/BrandLogo';
+import NotificationBellContainer from '../../features/notifications/NotificationBellContainer';
 
 export default function CommunityHeader() {
   const logout = useLogout();
@@ -35,6 +36,7 @@ export default function CommunityHeader() {
         <div className="account-menu">
           <ThemeSwitcher />
           {user ? <>
+            <NotificationBellContainer />
             <Link className="account-link" to="/profile"><UserRound size={17} /><span>{displayName}</span></Link>
             <button className="icon-button" type="button" title="Đăng xuất" aria-label="Đăng xuất" onClick={() => logout.mutate()} disabled={logout.isPending}><LogOut size={18} /></button>
           </> : <>

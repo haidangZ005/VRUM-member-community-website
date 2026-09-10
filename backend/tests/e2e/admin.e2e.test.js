@@ -49,8 +49,8 @@ describe('Admin API', () => {
     });
     await adminAgent.get('/api/admin/posts').set('Authorization', adminAuthorization).expect(200);
     await adminAgent.get('/api/admin/comments').set('Authorization', adminAuthorization).expect(200);
-    await adminAgent.delete(`/api/admin/comments/${commentId}`).set('Authorization', adminAuthorization).expect(200);
-    await adminAgent.delete(`/api/admin/posts/${postId}`).set('Authorization', adminAuthorization).expect(200);
+    await adminAgent.delete(`/api/admin/comments/${commentId}`).set('Authorization', adminAuthorization).send({ reason: 'Vi phạm quy định cộng đồng' }).expect(200);
+    await adminAgent.delete(`/api/admin/posts/${postId}`).set('Authorization', adminAuthorization).send({ reason: 'Vi phạm quy định cộng đồng' }).expect(200);
     await memberAgent.get(`/api/posts/${postId}`).set('Authorization', memberAuthorization).expect(404);
   });
 

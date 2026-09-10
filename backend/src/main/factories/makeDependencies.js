@@ -9,8 +9,14 @@ const PostgresCommentRepository = require('../../infrastructure/database/postgre
 const PostgresVoteRepository = require('../../infrastructure/database/postgres/repositories/PostgresVoteRepository');
 const PostgresCategoryRepository = require('../../infrastructure/database/postgres/repositories/PostgresCategoryRepository');
 const PostgresSearchRepository = require('../../infrastructure/database/postgres/repositories/PostgresSearchRepository');
+const PostgresNotificationRepository = require('../../infrastructure/database/postgres/repositories/PostgresNotificationRepository');
+const PostgresUnitOfWork = require('../../infrastructure/database/postgres/PostgresUnitOfWork');
 
 function makeDependencies() {
+  const postRepository = new PostgresPostRepository();
+  const commentRepository = new PostgresCommentRepository();
+  const voteRepository = new PostgresVoteRepository();
+  const notificationRepository = new PostgresNotificationRepository();
   return {
     userRepository: new PostgresUserRepository(),
     refreshTokenRepository: new PostgresRefreshTokenRepository(),
@@ -18,11 +24,13 @@ function makeDependencies() {
     hashService: new BcryptHashService(),
     tokenService: new JwtTokenService(),
     emailService: new NodemailerEmailService(),
-    postRepository: new PostgresPostRepository(),
-    commentRepository: new PostgresCommentRepository(),
-    voteRepository: new PostgresVoteRepository(),
+    postRepository,
+    commentRepository,
+    voteRepository,
     categoryRepository: new PostgresCategoryRepository(),
     searchRepository: new PostgresSearchRepository(),
+    notificationRepository,
+    unitOfWork: new PostgresUnitOfWork({ postRepository, commentRepository, voteRepository, notificationRepository }),
   };
 }
 

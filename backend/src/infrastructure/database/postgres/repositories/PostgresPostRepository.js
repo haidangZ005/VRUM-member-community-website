@@ -37,13 +37,13 @@ const baseSelect = `
   LEFT JOIN categories c ON c.id = p.category_id`;
 
 class PostgresPostRepository {
-  async create(post) {
-    const { rows } = await pool.query(
+  async create(post, database = pool) {
+    const { rows } = await database.query(
       `INSERT INTO posts (author_id, category_id, title, content, images)
        VALUES ($1, $2, $3, $4, $5::jsonb) RETURNING id`,
       [post.authorId, post.categoryId, post.title, post.content, JSON.stringify(post.images || [])],
     );
-    return this.findById(rows[0].id, post.authorId);
+    return this.findById(rows[0].id, post.authorId, database);
   }
 
   async list({ page, limit, categoryId, viewerId, feed = 'all', sort = 'new' }) {
@@ -100,22 +100,22 @@ class PostgresPostRepository {
     return { items: itemsResult.rows.map(mapPost), total: countResult.rows[0].total };
   }
 
-  async findById(id, viewerId = null) {
-    const { rows } = await pool.query(`${baseSelect} WHERE p.id = $2`, [viewerId, id]);
+  async findById(id, viewerId = null, database = pool) {
+    const { rows } = await database.query(`${baseSelect} WHERE p.id = $2`, [viewerId, id]);
     return mapPost(rows[0]);
   }
 
-  async update(id, changes, viewerId = null) {
-    await pool.query(
+  async update(id, changes, viewerId = null, database = pool) {
+    await database.query(
       `UPDATE posts SET title = COALESCE($2, title), content = COALESCE($3, content),
        category_id = CASE WHEN $4 THEN $5::uuid ELSE category_id END, images = COALESCE($6::jsonb, images) WHERE id = $1`,
       [id, changes.title, changes.content, Object.prototype.hasOwnProperty.call(changes, 'categoryId'), changes.categoryId, changes.images === undefined ? null : JSON.stringify(changes.images)],
     );
-    return this.findById(id, viewerId);
+    return this.findById(id, viewerId, database);
   }
 
-  async remove(id) {
-    await pool.query("UPDATE posts SET status = 'removed' WHERE id = $1", [id]);
+  async remove(id, database = pool) {
+    await database.query("UPDATE posts SET status = 'removed' WHERE id = $1", [id]);
   }
 
   async recordView(id, userId) {

@@ -33,12 +33,12 @@ const selectComment = `
   JOIN posts p ON p.id = cm.post_id`;
 
 class PostgresCommentRepository {
-  async create(comment) {
-    const { rows } = await pool.query(
+  async create(comment, database = pool) {
+    const { rows } = await database.query(
       'INSERT INTO comments (post_id, author_id, content, parent_id, images) VALUES ($1, $2, $3, $4, $5::jsonb) RETURNING id',
       [comment.postId, comment.authorId, comment.content, comment.parentId, JSON.stringify(comment.images || [])],
     );
-    const result = await pool.query(`${selectComment.replace('SELECT cm.*', 'SELECT cm.*, p.title AS post_title')} WHERE cm.id = $2`, [comment.authorId, rows[0].id]);
+    const result = await database.query(`${selectComment.replace('SELECT cm.*', 'SELECT cm.*, p.title AS post_title')} WHERE cm.id = $2`, [comment.authorId, rows[0].id]);
     return mapComment(result.rows[0]);
   }
 
@@ -50,8 +50,8 @@ class PostgresCommentRepository {
     return rows.map(mapComment);
   }
 
-  async findById(id, viewerId = null) {
-    const { rows } = await pool.query(
+  async findById(id, viewerId = null, database = pool) {
+    const { rows } = await database.query(
       `${selectComment.replace('SELECT cm.*', 'SELECT cm.*, p.title AS post_title')} WHERE cm.id = $2`,
       [viewerId, id],
     );
@@ -80,9 +80,9 @@ class PostgresCommentRepository {
     return { items: itemsResult.rows.map(mapComment), total: countResult.rows[0].total };
   }
 
-  async moderate(id, status) {
-    await pool.query('UPDATE comments SET status = $2 WHERE id = $1', [id, status]);
-    return this.findById(id);
+  async moderate(id, status, database = pool) {
+    await database.query('UPDATE comments SET status = $2 WHERE id = $1', [id, status]);
+    return this.findById(id, null, database);
   }
 
   async countByStatus() {
@@ -94,9 +94,9 @@ class PostgresCommentRepository {
     return rows[0];
   }
 
-  async update(id, { content, images }) {
-    await pool.query('UPDATE comments SET content = $2, images = $3::jsonb WHERE id = $1', [id, content, JSON.stringify(images)]);
-    return this.findById(id);
+  async update(id, { content, images }, database = pool) {
+    await database.query('UPDATE comments SET content = $2, images = $3::jsonb WHERE id = $1', [id, content, JSON.stringify(images)]);
+    return this.findById(id, null, database);
   }
 }
 
