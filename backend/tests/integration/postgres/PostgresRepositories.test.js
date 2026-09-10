@@ -81,6 +81,6 @@ describeIntegration('PostgreSQL repositories', () => {
     expect(await comments.countByStatus()).toMatchObject({ total: 1, visible: 0, removed: 1 });
     await categories.update(category.id, new Category({ ...category.toJSON(), name: 'Kiểm thử cập nhật' }));
     expect((await categories.findByName('kiểm thử cập nhật')).id).toBe(category.id);
-    expect(await votes.setPostVote(post.id, author.id, 0)).toEqual({ score: 0, viewerVote: 0 });
+    expect(await votes.setPostVote(post.id, author.id, 0)).toEqual({ previousScore: 1, score: 0, viewerVote: 0 });
   });
 });
