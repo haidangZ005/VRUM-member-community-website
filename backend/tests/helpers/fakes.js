@@ -282,6 +282,58 @@ class MemoryPostRepository {
   }
 }
 
+class MemorySearchRepository {
+  constructor({ postRepository, commentRepository, categoryRepository, userRepository, voteRepository }) {
+    Object.assign(this, { postRepository, commentRepository, categoryRepository, userRepository, voteRepository });
+  }
+  matches(value, q) { return value.toLowerCase().includes(q.toLowerCase()); }
+  inScope(item, filters) {
+    return (!filters.categoryId || item.categoryId === filters.categoryId)
+      && (!filters.authorId || item.authorId === filters.authorId)
+      && (!filters.from || item.createdAt >= new Date(filters.from))
+      && (!filters.to || item.createdAt <= new Date(filters.to));
+  }
+  page(items, filters) {
+    const offset = (filters.page - 1) * filters.limit;
+    return { items: items.slice(offset, offset + filters.limit), total: items.length };
+  }
+  postResult(post) {
+    const author = this.userRepository.users.find((user) => user.id === post.authorId);
+    const category = this.categoryRepository.categories.find((item) => item.id === post.categoryId);
+    return { id: post.id, title: post.title, excerpt: post.content, author: { id: author.id, username: author.username, fullName: author.fullName, avatarUrl: author.avatarUrl }, community: category ? { id: category.id, name: category.name } : null, score: this.voteRepository.score('post', post.id), commentCount: this.commentRepository.countByPost(post.id), createdAt: post.createdAt };
+  }
+  async searchPosts(filters) {
+    return this.page(this.postRepository.posts.filter((post) => post.status === 'published' && this.inScope(post, filters) && this.matches(`${post.title} ${post.content}`, filters.q)).map((post) => this.postResult(post)), filters);
+  }
+  async searchComments(filters) {
+    const items = this.commentRepository.comments.filter((comment) => {
+      const parentPost = this.postRepository.posts.find((post) => post.id === comment.postId);
+      return comment.status === 'visible' && parentPost?.status === 'published'
+        && this.inScope({ ...comment, categoryId: parentPost.categoryId }, filters) && this.matches(comment.content, filters.q);
+    }).map((comment) => {
+      const author = this.userRepository.users.find((user) => user.id === comment.authorId);
+      const post = this.postRepository.posts.find((item) => item.id === comment.postId);
+      return { id: comment.id, postId: post.id, postTitle: post.title, excerpt: comment.content, author: { id: author.id, username: author.username, fullName: author.fullName, avatarUrl: author.avatarUrl }, community: null, score: this.voteRepository.score('comment', comment.id), createdAt: comment.createdAt };
+    });
+    return this.page(items, filters);
+  }
+  async searchCommunities(filters) {
+    return this.page(this.categoryRepository.categories.filter((category) => this.matches(`${category.name} ${category.description || ''}`, filters.q)).map((category) => ({ id: category.id, name: category.name, description: category.description, avatarUrl: category.avatarUrl })), filters);
+  }
+  async searchUsers(filters) {
+    return this.page(this.userRepository.users.filter((user) => user.status === 'active' && this.matches(`${user.username} ${user.fullName || ''}`, filters.q)).map((user) => ({ id: user.id, username: user.username, fullName: user.fullName, avatarUrl: user.avatarUrl })), filters);
+  }
+  async searchMedia(filters) {
+    const posts = this.postRepository.posts.filter((post) => post.status === 'published' && post.images.length && this.inScope(post, filters) && this.matches(`${post.title} ${post.content}`, filters.q)).map((post) => ({ ...this.postResult(post), postId: post.id, targetType: 'post', thumbnail: filters.includeThumbnail ? post.images[0] : null }));
+    const comments = this.commentRepository.comments.filter((comment) => {
+      const parentPost = this.postRepository.posts.find((post) => post.id === comment.postId);
+      return comment.status === 'visible' && parentPost?.status === 'published' && comment.images.length
+        && this.inScope({ ...comment, categoryId: parentPost.categoryId }, filters) && this.matches(comment.content, filters.q);
+    }).map((comment) => ({ id: comment.id, postId: comment.postId, targetType: 'comment', title: comment.post?.title, excerpt: comment.content, thumbnail: filters.includeThumbnail ? comment.images[0] : null, createdAt: comment.createdAt }));
+    return this.page([...posts, ...comments], filters);
+  }
+}
+
 function makeFakeDependencies() {
   const userRepository = new MemoryUserRepository();
   const categoryRepository = new MemoryCategoryRepository();
@@ -289,6 +341,7 @@ function makeFakeDependencies() {
   const commentRepository = new MemoryCommentRepository(userRepository, voteRepository);
   const postRepository = new MemoryPostRepository(userRepository, categoryRepository, voteRepository, commentRepository);
   commentRepository.postRepository = postRepository;
+  const searchRepository = new MemorySearchRepository({ postRepository, commentRepository, categoryRepository, userRepository, voteRepository });
   return {
     userRepository,
     refreshTokenRepository: new MemoryRefreshTokenRepository(),
@@ -300,6 +353,7 @@ function makeFakeDependencies() {
     postRepository,
     commentRepository,
     voteRepository,
+    searchRepository,
   };
 }
 

@@ -32,11 +32,12 @@ const CreateCategory = require('../../application/use-cases/admin/CreateCategory
 const UpdateCategory = require('../../application/use-cases/admin/UpdateCategory');
 const DeleteCategory = require('../../application/use-cases/admin/DeleteCategory');
 const GetDashboardStats = require('../../application/use-cases/admin/GetDashboardStats');
+const SearchContent = require('../../application/use-cases/search/SearchContent');
 
 function makeUseCases(dependencies) {
   const {
     userRepository, refreshTokenRepository, resetTokenRepository, hashService, tokenService, emailService,
-    postRepository, commentRepository, voteRepository, categoryRepository,
+    postRepository, commentRepository, voteRepository, categoryRepository, searchRepository,
   } = dependencies;
   return {
     registerUser: new RegisterUser({ userRepository, hashService }),
@@ -72,6 +73,7 @@ function makeUseCases(dependencies) {
     updateCategory: new UpdateCategory({ categoryRepository }),
     deleteCategory: new DeleteCategory({ categoryRepository }),
     getDashboardStats: new GetDashboardStats({ userRepository, postRepository, commentRepository, categoryRepository }),
+    searchContent: new SearchContent({ searchRepository }),
   };
 }
 

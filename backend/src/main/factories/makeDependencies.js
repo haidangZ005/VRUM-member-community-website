@@ -8,6 +8,7 @@ const PostgresPostRepository = require('../../infrastructure/database/postgres/r
 const PostgresCommentRepository = require('../../infrastructure/database/postgres/repositories/PostgresCommentRepository');
 const PostgresVoteRepository = require('../../infrastructure/database/postgres/repositories/PostgresVoteRepository');
 const PostgresCategoryRepository = require('../../infrastructure/database/postgres/repositories/PostgresCategoryRepository');
+const PostgresSearchRepository = require('../../infrastructure/database/postgres/repositories/PostgresSearchRepository');
 
 function makeDependencies() {
   return {
@@ -21,6 +22,7 @@ function makeDependencies() {
     commentRepository: new PostgresCommentRepository(),
     voteRepository: new PostgresVoteRepository(),
     categoryRepository: new PostgresCategoryRepository(),
+    searchRepository: new PostgresSearchRepository(),
   };
 }
 
