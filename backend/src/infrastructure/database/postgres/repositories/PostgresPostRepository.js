@@ -46,21 +46,55 @@ class PostgresPostRepository {
     return this.findById(rows[0].id, post.authorId);
   }
 
-  async list({ page, limit, categoryId, viewerId, sort = 'latest' }) {
+  async list({ page, limit, categoryId, viewerId, feed = 'all', sort = 'new' }) {
     const offset = (page - 1) * limit;
-    const params = [viewerId, categoryId, limit, offset];
-    const orderBy = sort === 'popular' ? 'score DESC, comment_count DESC, p.created_at DESC' : 'p.created_at DESC';
+    const effectiveFeed = viewerId || feed !== 'home' ? feed : 'popular';
+    const params = [viewerId, categoryId, limit, offset, effectiveFeed];
+    const joinedFirst = effectiveFeed === 'home'
+      ? `CASE WHEN EXISTS (
+          SELECT 1 FROM community_memberships home_membership
+          WHERE home_membership.category_id = p.category_id AND home_membership.user_id = $1
+        ) THEN 0 ELSE 1 END,`
+      : '';
+    const unseenFirst = effectiveFeed === 'home'
+      ? `CASE WHEN EXISTS (
+          SELECT 1 FROM post_views recent_view
+          WHERE recent_view.post_id = p.id AND recent_view.user_id = $1
+            AND recent_view.viewed_at > now() - interval '7 days'
+        ) THEN 1 ELSE 0 END,`
+      : '';
+    const ranking = sort === 'top'
+      ? 'score DESC, comment_count DESC, p.created_at DESC'
+      : sort === 'hot'
+        ? `((SELECT COALESCE(SUM(hot_vote.value), 0) FROM post_votes hot_vote WHERE hot_vote.post_id = p.id)
+          + 2 * (SELECT COUNT(*) FROM comments hot_comment WHERE hot_comment.post_id = p.id AND hot_comment.status = 'visible'))
+          / POWER(EXTRACT(EPOCH FROM (now() - p.created_at)) / 3600 + 2, 1.5) DESC, p.created_at DESC`
+        : 'p.created_at DESC';
+    const filters = `p.status = 'published'
+      AND ($2::uuid IS NULL OR p.category_id = $2)
+      AND ($1::uuid IS NULL OR NOT EXISTS (
+        SELECT 1 FROM hidden_posts hidden WHERE hidden.post_id = p.id AND hidden.user_id = $1
+      ))
+      AND ($5 = 'all' OR $1::uuid IS NULL OR NOT EXISTS (
+        SELECT 1 FROM muted_communities muted WHERE muted.category_id = p.category_id AND muted.user_id = $1
+      ))
+      AND ($5 <> 'home' OR $1::uuid IS NULL OR EXISTS (
+        SELECT 1 FROM community_memberships joined WHERE joined.category_id = p.category_id AND joined.user_id = $1
+      ) OR NOT EXISTS (
+        SELECT 1 FROM not_interested_posts feedback
+        WHERE feedback.category_id = p.category_id AND feedback.user_id = $1
+      ))`;
+    const countFilters = filters.replaceAll('$5', '$3');
     const [itemsResult, countResult] = await Promise.all([
       pool.query(
         `${baseSelect}
-         WHERE p.status = 'published' AND ($2::uuid IS NULL OR p.category_id = $2)
-         ORDER BY ${orderBy} LIMIT $3 OFFSET $4`,
+         WHERE ${filters}
+         ORDER BY ${joinedFirst} ${unseenFirst} ${ranking} LIMIT $3 OFFSET $4`,
         params,
       ),
       pool.query(
-        `SELECT COUNT(*)::int AS total FROM posts
-         WHERE status = 'published' AND ($1::uuid IS NULL OR category_id = $1)`,
-        [categoryId],
+        `SELECT COUNT(*)::int AS total FROM posts p WHERE ${countFilters}`,
+        [viewerId, categoryId, effectiveFeed],
       ),
     ]);
     return { items: itemsResult.rows.map(mapPost), total: countResult.rows[0].total };
@@ -82,6 +116,30 @@ class PostgresPostRepository {
 
   async remove(id) {
     await pool.query("UPDATE posts SET status = 'removed' WHERE id = $1", [id]);
+  }
+
+  async recordView(id, userId) {
+    await pool.query(
+      `INSERT INTO post_views (post_id, user_id) VALUES ($1, $2)
+       ON CONFLICT (user_id, post_id) DO UPDATE SET viewed_at = now()`,
+      [id, userId],
+    );
+  }
+
+  async setHidden(id, userId, hidden) {
+    if (hidden) {
+      await pool.query('INSERT INTO hidden_posts (post_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [id, userId]);
+    } else {
+      await pool.query('DELETE FROM hidden_posts WHERE post_id = $1 AND user_id = $2', [id, userId]);
+    }
+  }
+
+  async markNotInterested(id, categoryId, userId) {
+    await pool.query(
+      `INSERT INTO not_interested_posts (post_id, category_id, user_id)
+       VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+      [id, categoryId, userId],
+    );
   }
 
   async listAll({ page, limit, search, status }) {

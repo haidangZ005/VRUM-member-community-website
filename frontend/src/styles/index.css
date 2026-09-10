@@ -217,6 +217,12 @@ button, input, textarea, select { font: inherit; }
 .reaction-button { padding: 8px 10px; border-radius: 9px; }
 .reaction-button:hover, .reaction-button.liked { color: #ffffff; background: #090909; }
 .reaction-button.compact .reaction-label { display: none; }
+.feed-card-action { display: inline-flex; align-items: center; gap: 5px; padding: 7px 8px; border: 0; border-radius: 8px; background: transparent; color: #787878; cursor: pointer; font-size: 12px; font-weight: 700; }
+.feed-card-action:hover:not(:disabled) { color: var(--vrum-ink); background: var(--vrum-selection); }
+.feed-card-action:disabled { opacity: .5; cursor: wait; }
+.feed-sort { min-height: 38px; padding: 0 34px 0 12px; border: 1px solid var(--vrum-border); border-radius: 9px; background: var(--vrum-surface); color: var(--vrum-ink); font: inherit; font-size: 13px; font-weight: 700; }
+.feed-undo { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; border-radius: 10px; background: var(--vrum-ink); color: var(--vrum-surface); font-size: 13px; }
+.feed-undo button { border: 0; background: transparent; color: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
 .vote-control { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--vrum-border); border-radius: 999px; background: var(--vrum-surface); overflow: hidden; }
 .vote-control button { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border: 0; background: transparent; color: #787878; cursor: pointer; }
 .vote-control button:hover:not(:disabled), .vote-control button.selected.up { color: #e64800; background: #fff2ec; }

@@ -90,4 +90,24 @@ describe('Sprint 2 community use cases', () => {
     expect(feed.data).toHaveLength(2);
     expect(new Set(feed.data.map((post) => post.categoryId))).toEqual(new Set(categories.map((item) => item.id)));
   });
+
+  test('Home ưu tiên cộng đồng đã tham gia và tôn trọng hide, not-interested, mute', async () => {
+    const categories = await dependencies.categoryRepository.list();
+    await dependencies.categoryRepository.join(categories[0].id, author.id);
+    const joinedPost = await useCases.createPost.execute(author.id, { title: 'Bài trong cộng đồng đã tham gia', content: 'Nội dung dành cho bảng tin Home của thành viên.', categoryId: categories[0].id });
+    const suggestedPost = await useCases.createPost.execute(author.id, { title: 'Bài gợi ý từ cộng đồng khác', content: 'Nội dung được dùng để kiểm tra cơ chế đề xuất.', categoryId: categories[1].id });
+
+    const home = await useCases.listPosts.execute({ feed: 'home', viewerId: author.id });
+    expect(home.data.map((post) => post.id)).toEqual([joinedPost.id, suggestedPost.id]);
+
+    await useCases.recordPostView.execute(joinedPost.id, author.id);
+    await useCases.setPostHidden.execute(joinedPost.id, author.id, true);
+    await useCases.markPostNotInterested.execute(suggestedPost.id, author.id);
+    expect((await useCases.listPosts.execute({ feed: 'home', viewerId: author.id })).data).toHaveLength(0);
+
+    await useCases.setPostHidden.execute(joinedPost.id, author.id, false);
+    await dependencies.categoryRepository.setMuted(categories[0].id, author.id, true);
+    expect((await useCases.listPosts.execute({ feed: 'popular', viewerId: author.id })).data.map((post) => post.id)).toEqual([suggestedPost.id]);
+    expect(await dependencies.categoryRepository.listRecommended(author.id)).toHaveLength(0);
+  });
 });

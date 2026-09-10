@@ -83,6 +83,8 @@ class MemoryCategoryRepository {
   constructor() {
     const now = new Date();
     this.memberships = [];
+    this.mutes = [];
+    this.recommendationFeedback = [];
     this.categories = [
       new Category({ id: crypto.randomUUID(), name: 'Hỏi đáp', description: 'Cùng nhau giải đáp', createdAt: now, updatedAt: now }),
       new Category({ id: crypto.randomUUID(), name: 'Chia sẻ', description: 'Kinh nghiệm thành viên', createdAt: now, updatedAt: now }),
@@ -91,7 +93,7 @@ class MemoryCategoryRepository {
   hydrate(category, viewerId = null) {
     if (!category) return null;
     const membership = this.memberships.find((item) => item.categoryId === category.id && item.userId === viewerId);
-    return new Category({ ...category.toJSON(), joinedByCurrentUser: Boolean(membership), favoriteByCurrentUser: Boolean(membership?.favorite) });
+    return new Category({ ...category.toJSON(), joinedByCurrentUser: Boolean(membership), favoriteByCurrentUser: Boolean(membership?.favorite), mutedByCurrentUser: this.mutes.some((item) => item.categoryId === category.id && item.userId === viewerId) });
   }
   async findById(id, viewerId = null) { return this.hydrate(this.categories.find((category) => category.id === id), viewerId); }
   async list({ search = '', limit, ownerId = null, viewerId = null, joinedOnly = false, favoritesOnly = false } = {}) {
@@ -119,6 +121,7 @@ class MemoryCategoryRepository {
   async remove(id) {
     this.categories = this.categories.filter((category) => category.id !== id);
     this.memberships = this.memberships.filter((item) => item.categoryId !== id);
+    this.mutes = this.mutes.filter((item) => item.categoryId !== id);
   }
   async join(categoryId, userId) {
     if (!this.memberships.some((item) => item.categoryId === categoryId && item.userId === userId)) this.memberships.push({ categoryId, userId, favorite: false });
@@ -132,6 +135,16 @@ class MemoryCategoryRepository {
     await this.join(categoryId, userId);
     this.memberships.find((item) => item.categoryId === categoryId && item.userId === userId).favorite = favorite;
     return this.findById(categoryId, userId);
+  }
+  async setMuted(categoryId, userId, muted) {
+    this.mutes = this.mutes.filter((item) => item.categoryId !== categoryId || item.userId !== userId);
+    if (muted) this.mutes.push({ categoryId, userId });
+    return this.findById(categoryId, userId);
+  }
+  async listRecommended(userId, limit = 5) {
+    return this.categories.filter((category) => !this.memberships.some((item) => item.categoryId === category.id && item.userId === userId)
+      && !this.mutes.some((item) => item.categoryId === category.id && item.userId === userId)
+      && !this.recommendationFeedback.some((item) => item.categoryId === category.id && item.userId === userId)).slice(0, limit).map((category) => this.hydrate(category, userId));
   }
   async count() { return this.categories.length; }
 }
@@ -194,6 +207,9 @@ class MemoryPostRepository {
     this.categoryRepository = categoryRepository;
     this.voteRepository = voteRepository;
     this.commentRepository = commentRepository;
+    this.views = [];
+    this.hidden = [];
+    this.feedback = [];
   }
   async hydrate(post, viewerId = null) {
     const user = await this.userRepository.findById(post.authorId);
@@ -212,9 +228,21 @@ class MemoryPostRepository {
     this.posts.push(created);
     return this.hydrate(created, post.authorId);
   }
-  async list({ page, limit, categoryId, viewerId, sort = 'latest' }) {
-    const filtered = this.posts.filter((post) => post.status === 'published' && (!categoryId || post.categoryId === categoryId));
-    if (sort === 'popular') filtered.sort((a, b) => this.voteRepository.score('post', b.id) - this.voteRepository.score('post', a.id));
+  async list({ page, limit, categoryId, viewerId, feed = 'all', sort = 'new' }) {
+    const effectiveFeed = viewerId || feed !== 'home' ? feed : 'popular';
+    const filtered = this.posts.filter((post) => post.status === 'published' && (!categoryId || post.categoryId === categoryId)
+      && (!viewerId || !this.hidden.some((item) => item.postId === post.id && item.userId === viewerId))
+      && (effectiveFeed === 'all' || !viewerId || !this.categoryRepository.mutes.some((item) => item.categoryId === post.categoryId && item.userId === viewerId))
+      && (effectiveFeed !== 'home' || !viewerId || this.categoryRepository.memberships.some((item) => item.categoryId === post.categoryId && item.userId === viewerId)
+        || !this.feedback.some((item) => item.categoryId === post.categoryId && item.userId === viewerId)));
+    if (sort === 'hot' || sort === 'top') filtered.sort((a, b) => this.voteRepository.score('post', b.id) - this.voteRepository.score('post', a.id));
+    if (effectiveFeed === 'home' && viewerId) filtered.sort((a, b) => {
+      const joinedDifference = Number(this.categoryRepository.memberships.some((item) => item.categoryId === b.categoryId && item.userId === viewerId))
+        - Number(this.categoryRepository.memberships.some((item) => item.categoryId === a.categoryId && item.userId === viewerId));
+      if (joinedDifference) return joinedDifference;
+      return Number(this.views.some((item) => item.postId === a.id && item.userId === viewerId))
+        - Number(this.views.some((item) => item.postId === b.id && item.userId === viewerId));
+    });
     const pageItems = filtered.slice((page - 1) * limit, page * limit);
     return { items: await Promise.all(pageItems.map((post) => this.hydrate(post, viewerId))), total: filtered.length };
   }
@@ -228,6 +256,20 @@ class MemoryPostRepository {
     return this.hydrate(post, viewerId);
   }
   async remove(id) { const post = this.posts.find((item) => item.id === id); if (post) post.status = 'removed'; }
+  async recordView(id, userId) {
+    this.views = this.views.filter((item) => item.postId !== id || item.userId !== userId);
+    this.views.push({ postId: id, userId, viewedAt: new Date() });
+  }
+  async setHidden(id, userId, hidden) {
+    this.hidden = this.hidden.filter((item) => item.postId !== id || item.userId !== userId);
+    if (hidden) this.hidden.push({ postId: id, userId });
+  }
+  async markNotInterested(id, categoryId, userId) {
+    if (!this.feedback.some((item) => item.postId === id && item.userId === userId)) {
+      this.feedback.push({ postId: id, categoryId, userId });
+      this.categoryRepository.recommendationFeedback.push({ categoryId, userId });
+    }
+  }
   async listAll({ page, limit, search, status }) {
     const normalized = search.toLowerCase();
     const filtered = this.posts.filter((post) => (!status || post.status === status)

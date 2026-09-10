@@ -8,6 +8,8 @@ class ICategoryRepository {
   async join(_categoryId, _userId) { throw new Error('Not implemented'); }
   async leave(_categoryId, _userId) { throw new Error('Not implemented'); }
   async setFavorite(_categoryId, _userId, _favorite) { throw new Error('Not implemented'); }
+  async setMuted(_categoryId, _userId, _muted) { throw new Error('Not implemented'); }
+  async listRecommended(_userId, _limit) { throw new Error('Not implemented'); }
   async count() { throw new Error('Not implemented'); }
 }
 

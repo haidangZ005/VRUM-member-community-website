@@ -13,6 +13,9 @@ const GetPostDetail = require('../../application/use-cases/posts/GetPostDetail')
 const EditPost = require('../../application/use-cases/posts/EditPost');
 const DeletePost = require('../../application/use-cases/posts/DeletePost');
 const SetPostVote = require('../../application/use-cases/posts/SetPostVote');
+const RecordPostView = require('../../application/use-cases/posts/RecordPostView');
+const SetPostHidden = require('../../application/use-cases/posts/SetPostHidden');
+const MarkPostNotInterested = require('../../application/use-cases/posts/MarkPostNotInterested');
 const CreateComment = require('../../application/use-cases/comments/CreateComment');
 const EditComment = require('../../application/use-cases/comments/EditComment');
 const ListCommentsByPost = require('../../application/use-cases/comments/ListCommentsByPost');
@@ -50,6 +53,9 @@ function makeUseCases(dependencies) {
     editPost: new EditPost({ postRepository, categoryRepository }),
     deletePost: new DeletePost({ postRepository }),
     setPostVote: new SetPostVote({ postRepository, voteRepository }),
+    recordPostView: new RecordPostView({ postRepository }),
+    setPostHidden: new SetPostHidden({ postRepository }),
+    markPostNotInterested: new MarkPostNotInterested({ postRepository }),
     createComment: new CreateComment({ postRepository, commentRepository }),
     editComment: new EditComment({ postRepository, commentRepository }),
     listCommentsByPost: new ListCommentsByPost({ postRepository, commentRepository }),

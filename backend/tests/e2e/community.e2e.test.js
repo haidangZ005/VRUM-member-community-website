@@ -162,7 +162,7 @@ describe('Community API', () => {
       .send({ title: 'Bài viết thứ hai', content: 'Nội dung bài viết thứ hai trong cộng đồng.', categoryId: community.body.data.id }).expect(201);
     await agent.put(`/api/posts/${first.body.data.id}/votes`).set('Authorization', authorization).send({ value: 1 }).expect(200);
 
-    await agent.get('/api/posts').query({ sort: 'popular' }).set('Authorization', authorization).expect(200)
+    await agent.get('/api/posts').query({ feed: 'popular', sort: 'hot' }).set('Authorization', authorization).expect(200)
       .expect(({ body }) => expect(body.data[0].id).toBe(first.body.data.id));
     await agent.get('/api/posts').query({ sort: 'unknown' }).set('Authorization', authorization).expect(422);
     await agent.delete(`/api/posts/categories/${community.body.data.id}`).set('Authorization', authorization).expect(200);

@@ -1,10 +1,11 @@
+import { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Edit3, MessageSquare, Trash2 } from 'lucide-react';
 import CommunityHeader from '../../components/layout/CommunityHeader';
 import CommentList from '../../features/comments/components/CommentList';
 import { AttachedImages } from '../../components/ui/ImageAttachments';
 import PostVoteControl from '../../features/posts/components/PostVoteControl';
-import { useDeletePost, usePost } from '../../features/posts/hooks/usePosts';
+import { useDeletePost, usePost, useRecordPostView } from '../../features/posts/hooks/usePosts';
 import { useAuthStore } from '../../store/authStore';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'long', timeStyle: 'short' });
@@ -13,7 +14,12 @@ export default function PostDetailPage() {
   const { id } = useParams();
   const post = usePost(id);
   const remove = useDeletePost();
+  const { mutate: recordView } = useRecordPostView();
   const user = useAuthStore((state) => state.user);
+
+  useEffect(() => {
+    if (user && post.data?.id) recordView(post.data.id);
+  }, [post.data?.id, recordView, user]);
 
   if (!post.data && !post.error) return <div className="page-loader">Đang mở cuộc trò chuyện…</div>;
   if (post.error) return <div className="community-page"><CommunityHeader /><div className="detail-state"><h1>Không tìm thấy bài viết</h1><Link to="/posts"><ArrowLeft size={17} /> Trở lại bảng tin</Link></div></div>;

@@ -54,7 +54,33 @@ export function useCommunityActions() {
   return {
     membership: useMutation({ mutationFn: postApi.setCategoryJoined, onSuccess: refresh }),
     favorite: useMutation({ mutationFn: postApi.setCategoryFavorite, onSuccess: refresh }),
+    mute: useMutation({ mutationFn: postApi.setCategoryMuted, onSuccess: (_, { id }) => {
+      refresh();
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['recommended-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['category', id] });
+    } }),
   };
+}
+
+export function useRecommendedCategories(limit = 5) {
+  const { isInitialized, user } = useAuthStore();
+  return useQuery({ queryKey: ['recommended-categories', limit, user?.id], queryFn: () => postApi.recommendedCategories(limit), enabled: isInitialized && Boolean(user), staleTime: 5 * 60 * 1000 });
+}
+
+export function useFeedActions() {
+  const queryClient = useQueryClient();
+  const refreshFeeds = () => queryClient.invalidateQueries({ queryKey: ['posts'] });
+  return {
+    hide: useMutation({ mutationFn: postApi.setHidden, onSuccess: refreshFeeds }),
+    notInterested: useMutation({ mutationFn: postApi.markNotInterested, onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recommended-categories'] });
+    } }),
+  };
+}
+
+export function useRecordPostView() {
+  return useMutation({ mutationFn: postApi.recordView });
 }
 
 export function useCreatePost({ stayOnFeed = false } = {}) {
