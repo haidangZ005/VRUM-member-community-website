@@ -45,9 +45,11 @@ export default function ImageAttachments({ value = [], onChange, disabled, onBus
     finally { setBusy(false); onBusyChange?.(false); }
   };
   return <div className="image-attachments">
-    <label htmlFor={id}><ImagePlus size={18} /> {busy ? 'Đang xử lý ảnh…' : 'Thêm ảnh'}</label>
-    <input id={id} type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={disabled || busy || value.length >= 4} onChange={select} aria-describedby={`${id}-hint`} />
-    <small id={`${id}-hint`}>Tối đa 4 ảnh JPG, PNG hoặc WebP, 5 MB/ảnh. Ảnh được thu nhỏ để tải nhanh hơn.</small>
+    <div className="attachment-picker">
+      <input id={id} type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={disabled || busy || value.length >= 4} onChange={select} aria-describedby={`${id}-hint`} />
+      <label htmlFor={id}><ImagePlus size={18} /> {busy ? 'Đang xử lý ảnh…' : 'Thêm ảnh'}<span>{value.length}/4</span></label>
+    </div>
+    <small id={`${id}-hint`}>JPG, PNG hoặc WebP · Tối đa 5 MB/ảnh</small>
     {error && <p className="alert error" role="alert">{error}</p>}
     <div className="attachment-previews">{value.map((src, index) => <div key={index}><img src={src} alt={`Xem trước ảnh ${index + 1}`} /><button type="button" aria-label={`Bỏ ảnh ${index + 1}`} disabled={disabled || busy} onClick={() => onChange(value.filter((_, position) => position !== index))}><X size={16} /></button></div>)}</div>
   </div>;

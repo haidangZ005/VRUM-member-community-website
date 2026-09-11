@@ -170,6 +170,9 @@ button, input, textarea, select { font: inherit; }
 .topic-results span, .topic-results p { margin: 0; color: #7d7d7d; font-size: 12px; font-weight: 500; }
 .community-shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); max-width: 1400px; margin: 0 auto; }
 .community-sidebar { min-width: 0; position: sticky; top: 77px; align-self: start; min-height: calc(100vh - 77px); padding: 28px 18px; border-right: 1px solid #e1e1e1; }
+@media (min-width: 901px) {
+  .community-sidebar { min-height: 0; height: calc(100dvh - 77px); overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; scrollbar-width: thin; scrollbar-color: #88888880 transparent; scrollbar-gutter: stable; }
+}
 .community-sidebar nav { min-width: 0; display: grid; gap: 5px; }
 .community-sidebar a { min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 12px; color: #626262; font-size: 14px; }
 .community-sidebar a:hover, .community-sidebar a.active { color: #3f3f3f; background: #eaeaea; }
@@ -854,7 +857,8 @@ button, input, textarea, select { font: inherit; }
 :root:root .input-shell:focus-within,
 :root:root .topic-search:focus-within { border-color: var(--vrum-accent); box-shadow: none; outline: 1px solid var(--vrum-accent); outline-offset: 0; }
 :root:root :is(button, a, input, textarea, select):focus-visible { outline: 2px solid var(--vrum-accent); outline-offset: 3px; }
-:root:root .input-shell input:focus-visible { outline: 0; }
+:root:root .input-shell input:focus-visible,
+:root:root .topic-search input:focus-visible { outline: 0; }
 :root:root .check-label input { accent-color: var(--vrum-accent); }
 :root:root ::selection,
 :root:root .input-shell input::selection { color: var(--vrum-on-accent); background: var(--vrum-accent); }
@@ -879,13 +883,25 @@ button, input, textarea, select { font: inherit; }
 .comment-actions button:disabled { opacity: .5; cursor: wait; }
 :root:root .comment-composer .comment-cancel { background: transparent; color: var(--vrum-ink); }
 .comment-replies { margin: 10px 0 0 18px; padding-left: 12px; border-left: 1px solid #8885; display: grid; gap: 10px; }
-.comment-replies .comment-replies { margin-left: 0; padding-left: 0; border: 0; }
+.comment-thread { min-width: 0; }
+.comment-item { scroll-margin-top: 140px; }
+.comment-item:target { border-color: var(--vrum-accent); }
+.comment-parent-link { display: flex; align-items: center; gap: 5px; margin-top: 8px; font-size: 12px; color: inherit; }
+.comment-parent-link span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.comment-parent-link svg { flex: none; }
+.comment-parent-link:hover { text-decoration: underline; }
+.feed-sort-menu { width: 150px; flex: none; }
 .comment-body .comment-composer { margin-top: 12px; }
 .create-post-dialog .editor-card { padding: 0; border: 0; background: transparent; box-shadow: none; }
 .create-post-dialog .editor-field textarea { min-height: 180px; max-height: 40vh; }
 .image-attachments { display: grid; gap: 10px; margin: 12px 0; min-width: 0; }
-.image-attachments > label { display: flex; align-items: center; gap: 8px; font-weight: 500; }
-.image-attachments > input { max-width: 100%; font: inherit; font-size: 13px; }
+.attachment-picker { position: relative; width: fit-content; }
+.attachment-picker input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.attachment-picker label { display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 8px 14px; border: 1px solid var(--vrum-border); border-radius: 10px; background: var(--vrum-surface); color: var(--vrum-ink); cursor: pointer; font-size: 14px; font-weight: 500; }
+.attachment-picker label span { margin-left: 8px; font-size: 12px; }
+.attachment-picker input:focus-visible + label { outline: 2px solid var(--vrum-accent); outline-offset: 3px; }
+.attachment-picker input:not(:disabled) + label:hover { background: var(--vrum-selection); }
+.attachment-picker input:disabled + label { opacity: .5; cursor: not-allowed; }
 .image-attachments > small { line-height: 1.5; color: inherit; }
 .attachment-previews { display: flex; flex-wrap: wrap; gap: 12px; }
 .attachment-previews > div { position: relative; }
