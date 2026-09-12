@@ -13,7 +13,7 @@ class Category {
     this.id = id;
     this.name = normalizedName;
     this.description = normalizedDescription;
-    if (avatarUrl !== null && !['/community-icons/thinkpad.svg', '/community-icons/framework.svg', '/community-icons/linux.svg'].includes(avatarUrl)) {
+    if (avatarUrl !== null && !['thinkpad', 'framework', 'linux', 'questions', 'sharing', 'projects', 'technology', 'life'].some((icon) => avatarUrl === `/community-icons/${icon}.svg`)) {
       if (typeof avatarUrl !== 'string' || avatarUrl.length > 90000 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(avatarUrl)) {
         throw new ValidationError('Ảnh đại diện phải là ảnh JPEG thu nhỏ, tối đa 90.000 ký tự');
       }

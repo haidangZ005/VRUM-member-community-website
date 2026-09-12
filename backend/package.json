@@ -11,6 +11,7 @@
     "seed:admin": "node src/infrastructure/database/postgres/seeds/seedAdmin.js",
     "seed:demo": "node src/infrastructure/database/postgres/seeds/seedDemo.js",
     "seed:tech": "node src/infrastructure/database/postgres/seeds/seedTech.js",
+    "seed:avatars": "node src/infrastructure/database/postgres/seeds/seedAvatars.js",
     "test": "jest --runInBand --coverage",
     "test:unit": "jest tests/unit --runInBand",
     "test:e2e": "jest tests/e2e --runInBand",

@@ -180,6 +180,7 @@ async function seedDemo() {
        entity_type=EXCLUDED.entity_type,entity_id=EXCLUDED.entity_id,payload=EXCLUDED.payload,read_at=NULL,created_at=now()`,
       [recipientId, actor === null ? null : userIds.get(members[actor].email), type, entityType, entityId, JSON.stringify(payload), dedupeKey],
     );
+    await require('./seedAvatars')(client);
     await client.query('COMMIT');
     console.log(`Đã tạo ${members.length} thành viên, ${posts.length} bài viết, ${comments.length + replies.length} bình luận và dữ liệu tương tác demo.`);
     console.log(`Tài khoản demo: ${members.map(({ email }) => email).join(', ')}`);

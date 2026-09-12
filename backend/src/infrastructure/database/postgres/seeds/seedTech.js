@@ -43,6 +43,7 @@ async function seedTech(pool) {
         [post.summary, post.id, users[0].id, content]);
       inserted += result.rowCount;
     }
+    await require('./seedAvatars')(client);
     await client.query('COMMIT');
     return inserted;
   } catch (error) {
