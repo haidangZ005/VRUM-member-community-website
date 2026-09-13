@@ -31,16 +31,20 @@ async function seedTech(pool) {
     }
 
     let inserted = 0;
-    for (const post of data.posts) {
-      const content = `Dữ liệu demo · Tóm lược tiếng Việt từ r/${post.category.toLowerCase()}. Không phải bài đăng của tác giả Reddit trên VRUM.\n\n${post.summary}\n\nBài gốc: ${post.sourceTitle}\nNguồn: ${post.sourceUrl}\nNgày tổng hợp: ${data.collectedOn}`;
+    const posts = [...data.posts, data.aiSummaryTestPost];
+    for (const post of posts) {
+      const content = post.content ?? post.summary;
       const result = await client.query(
         `INSERT INTO posts (id, author_id, category_id, title, content)
          VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING`,
-        [post.id, users[0].id, categoryIds.get(post.category), post.title, post.summary],
+        [post.id, users[0].id, categoryIds.get(post.category), post.title, content],
       );
-      // Only migrate the exact old seed body; preserve posts edited by a user.
-      await client.query('UPDATE posts SET content = $1 WHERE id = $2 AND author_id = $3 AND content = $4',
-        [post.summary, post.id, users[0].id, content]);
+      if (post.summary) {
+        const legacyContent = `Dữ liệu demo · Tóm lược tiếng Việt từ r/${post.category.toLowerCase()}. Không phải bài đăng của tác giả Reddit trên VRUM.\n\n${post.summary}\n\nBài gốc: ${post.sourceTitle}\nNguồn: ${post.sourceUrl}\nNgày tổng hợp: ${data.collectedOn}`;
+        // Only migrate the exact old seed body; preserve posts edited by a user.
+        await client.query('UPDATE posts SET content = $1 WHERE id = $2 AND author_id = $3 AND content = $4',
+          [post.summary, post.id, users[0].id, legacyContent]);
+      }
       inserted += result.rowCount;
     }
     await require('./seedAvatars')(client);
