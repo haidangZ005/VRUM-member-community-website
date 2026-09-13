@@ -1,4 +1,5 @@
 const express = require('express');
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const asyncHandler = require('../../../shared/utils/asyncHandler');
 const validateRequest = require('../middlewares/validateRequest');
 const { createPostSchema, updatePostSchema, createCommentSchema, voteSchema, hiddenSchema, mutedSchema, postIdSchema, categoryIdSchema, listPostsSchema, listCategoriesSchema, recommendationsSchema } = require('../validators/postValidator');
@@ -7,6 +8,14 @@ const { updateCommentSchema, commentIdSchema } = require('../validators/postVali
 
 function makePostRoutes(controller, authMiddleware, optionalAuthMiddleware) {
   const router = express.Router();
+  const summaryLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    limit: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => req.user?.id ? `user:${req.user.id}` : `ip:${ipKeyGenerator(req.ip)}`,
+    message: { error: { code: 'TOO_MANY_REQUESTS', message: 'Bạn đã yêu cầu quá nhiều bản tóm tắt. Vui lòng thử lại sau.' } },
+  });
   router.get('/categories', optionalAuthMiddleware, validateRequest(listCategoriesSchema, 'query'), asyncHandler(controller.listCategories));
   router.get('/categories/recommendations', authMiddleware, validateRequest(recommendationsSchema, 'query'), asyncHandler(controller.recommendedCategories));
   router.post('/categories', authMiddleware, validateRequest(categorySchema), asyncHandler(controller.createCategory));
@@ -26,6 +35,8 @@ function makePostRoutes(controller, authMiddleware, optionalAuthMiddleware) {
   router.post('/:id/views', authMiddleware, validateRequest(postIdSchema, 'params'), asyncHandler(controller.recordPostView));
   router.put('/:id/hides', authMiddleware, validateRequest(postIdSchema, 'params'), validateRequest(hiddenSchema), asyncHandler(controller.setPostHidden));
   router.post('/:id/recommendation-feedback', authMiddleware, validateRequest(postIdSchema, 'params'), asyncHandler(controller.markPostNotInterested));
+  router.get('/:id/summary', optionalAuthMiddleware, validateRequest(postIdSchema, 'params'), asyncHandler(controller.getSummary));
+  router.post('/:id/summary', optionalAuthMiddleware, summaryLimiter, validateRequest(postIdSchema, 'params'), asyncHandler(controller.summarize));
   router.get('/:id/comments', optionalAuthMiddleware, validateRequest(postIdSchema, 'params'), asyncHandler(controller.listComments));
   router.post('/:id/comments', authMiddleware, validateRequest(postIdSchema, 'params'), validateRequest(createCommentSchema), asyncHandler(controller.createComment));
   router.put('/:id/comments/:commentId', authMiddleware, validateRequest(commentIdSchema, 'params'), validateRequest(updateCommentSchema), asyncHandler(controller.updateComment));

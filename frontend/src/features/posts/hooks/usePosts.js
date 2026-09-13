@@ -90,6 +90,10 @@ export function useRecordPostView() {
   return useMutation({ mutationFn: postApi.recordView });
 }
 
+export function useSummarizePost(id) {
+  return useMutation({ mutationFn: async () => await postApi.getSummary(id) || postApi.summarize(id) });
+}
+
 export function useCreatePost({ stayOnFeed = false } = {}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();

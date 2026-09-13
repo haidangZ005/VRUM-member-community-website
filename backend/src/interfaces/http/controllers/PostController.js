@@ -35,6 +35,12 @@ function makePostController(useCases, dependencies) {
     async markPostNotInterested(req, res) {
       return res.json({ data: await useCases.markPostNotInterested.execute(req.validatedParams.id, req.user.id) });
     },
+    async summarize(req, res) {
+      return res.json({ data: await useCases.summarizePost.execute(req.validatedParams.id) });
+    },
+    async getSummary(req, res) {
+      return res.json({ data: await useCases.getPostSummary.execute(req.validatedParams.id) });
+    },
     async listComments(req, res) {
       return res.json({ data: await useCases.listCommentsByPost.execute(req.validatedParams.id, req.user?.id) });
     },

@@ -1,4 +1,4 @@
-export async function prepareCommunityAvatar(file) {
+export async function prepareAvatarImage(file) {
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Chọn ảnh JPG, PNG hoặc WebP.');
   if (file.size > 5 * 1024 * 1024) throw new Error('Ảnh tối đa 5 MB.');
   let bitmap;
@@ -14,9 +14,12 @@ export async function prepareCommunityAvatar(file) {
     const avatar = canvas.toDataURL('image/jpeg', 0.82);
     if (avatar.length > 90000) throw new Error('Ảnh sau khi thu nhỏ vẫn quá lớn.');
     return avatar;
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Ảnh sau khi thu nhỏ vẫn quá lớn.') throw error;
     throw new Error('Không thể đọc ảnh này. Hãy thử ảnh JPG, PNG hoặc WebP khác.');
   } finally {
     bitmap?.close();
   }
 }
+
+export const prepareCommunityAvatar = prepareAvatarImage;
