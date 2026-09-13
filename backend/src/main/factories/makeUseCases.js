@@ -16,6 +16,8 @@ const SetPostVote = require('../../application/use-cases/posts/SetPostVote');
 const RecordPostView = require('../../application/use-cases/posts/RecordPostView');
 const SetPostHidden = require('../../application/use-cases/posts/SetPostHidden');
 const MarkPostNotInterested = require('../../application/use-cases/posts/MarkPostNotInterested');
+const SummarizePost = require('../../application/use-cases/posts/SummarizePost');
+const GetPostSummary = require('../../application/use-cases/posts/GetPostSummary');
 const CreateComment = require('../../application/use-cases/comments/CreateComment');
 const EditComment = require('../../application/use-cases/comments/EditComment');
 const ListCommentsByPost = require('../../application/use-cases/comments/ListCommentsByPost');
@@ -41,7 +43,7 @@ const NotificationPreferences = require('../../application/use-cases/notificatio
 function makeUseCases(dependencies) {
   const {
     userRepository, refreshTokenRepository, resetTokenRepository, hashService, tokenService, emailService,
-    postRepository, commentRepository, voteRepository, categoryRepository, searchRepository, notificationRepository, unitOfWork,
+    postRepository, commentRepository, voteRepository, categoryRepository, searchRepository, notificationRepository, postSummaryRepository, summaryService, unitOfWork,
   } = dependencies;
   const notificationPublisher = new NotificationPublisher({ userRepository });
   return {
@@ -62,6 +64,8 @@ function makeUseCases(dependencies) {
     recordPostView: new RecordPostView({ postRepository }),
     setPostHidden: new SetPostHidden({ postRepository }),
     markPostNotInterested: new MarkPostNotInterested({ postRepository }),
+    summarizePost: new SummarizePost({ postRepository, postSummaryRepository, summaryService }),
+    getPostSummary: new GetPostSummary({ postRepository, postSummaryRepository }),
     createComment: new CreateComment({ notificationPublisher, unitOfWork }),
     editComment: new EditComment({ notificationPublisher, unitOfWork }),
     listCommentsByPost: new ListCommentsByPost({ postRepository, commentRepository }),

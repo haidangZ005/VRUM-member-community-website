@@ -10,7 +10,9 @@ const PostgresVoteRepository = require('../../infrastructure/database/postgres/r
 const PostgresCategoryRepository = require('../../infrastructure/database/postgres/repositories/PostgresCategoryRepository');
 const PostgresSearchRepository = require('../../infrastructure/database/postgres/repositories/PostgresSearchRepository');
 const PostgresNotificationRepository = require('../../infrastructure/database/postgres/repositories/PostgresNotificationRepository');
+const PostgresPostSummaryRepository = require('../../infrastructure/database/postgres/repositories/PostgresPostSummaryRepository');
 const PostgresUnitOfWork = require('../../infrastructure/database/postgres/PostgresUnitOfWork');
+const GroqSummaryService = require('../../infrastructure/services/GroqSummaryService');
 
 function makeDependencies() {
   const postRepository = new PostgresPostRepository();
@@ -30,6 +32,8 @@ function makeDependencies() {
     categoryRepository: new PostgresCategoryRepository(),
     searchRepository: new PostgresSearchRepository(),
     notificationRepository,
+    postSummaryRepository: new PostgresPostSummaryRepository(),
+    summaryService: new GroqSummaryService(),
     unitOfWork: new PostgresUnitOfWork({ postRepository, commentRepository, voteRepository, notificationRepository }),
   };
 }

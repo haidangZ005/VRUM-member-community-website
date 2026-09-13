@@ -39,12 +39,17 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4000
+      TRUST_PROXY_HOPS: 1
       DATABASE_URL: postgresql://postgres:password@postgres:5432/member_community_db
       DATABASE_SSL: "false"
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-local-access-secret-change-before-deploying}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-local-refresh-secret-change-before-deploying}
       CLIENT_URL: http://localhost:5173
       COOKIE_SECURE: "false"
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.groq.com/openai/v1}
+      LLM_MODEL: ${LLM_MODEL:-openai/gpt-oss-20b}
+      LLM_TIMEOUT_MS: ${LLM_TIMEOUT_MS:-25000}
     command: ["sh", "-c", "npm run migrate:up && npm start"]
     depends_on:
       postgres:
