@@ -6,6 +6,7 @@ import { useAuthStore } from '../../../store/authStore';
 import ImageAttachments, { AttachedImages } from '../../../components/ui/ImageAttachments';
 import VoteControl from '../../../components/ui/VoteControl';
 import UserAvatar from '../../../components/ui/UserAvatar';
+import UserPostsLink from '../../../components/ui/UserPostsLink';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
 const errorMessage = (error) => error?.response?.data?.error?.message || 'Không thể lưu bình luận. Vui lòng thử lại.';
@@ -40,7 +41,7 @@ function CommentItem({ categoryId, postId, comment, parent, childrenByParent, us
   return <div className="comment-thread">
     <article className="comment-item" id={`comment-${comment.id}`}>
       <UserAvatar user={comment.author} small categoryId={categoryId} />
-      <div className="comment-body"><div className="comment-meta"><strong>{name}</strong><time dateTime={comment.createdAt}>{dateFormatter.format(new Date(comment.createdAt))}</time></div>
+      <div className="comment-body"><div className="comment-meta"><strong><UserPostsLink user={comment.author} categoryId={categoryId}>{name}</UserPostsLink></strong><time dateTime={comment.createdAt}>{dateFormatter.format(new Date(comment.createdAt))}</time></div>
         {parent && <a className="comment-parent-link" href={`#comment-${parent.id}`}><Reply size={13} /> Trả lời {parent.author?.fullName || parent.author?.username || 'Thành viên'}: <span>{parent.content}</span></a>}
         {mode === 'edit' ? <CommentComposer postId={postId} comment={comment} onDone={() => setMode(null)} onCancel={() => setMode(null)} /> : <p>{comment.content}</p>}
         {mode !== 'edit' && <AttachedImages images={comment.images} />}

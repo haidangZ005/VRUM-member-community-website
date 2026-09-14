@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import UserPostsLink from './UserPostsLink';
 
 export default function UserAvatar({ user, small = false, categoryId }) {
   const name = user?.fullName || user?.username || 'Thành viên';
@@ -9,7 +9,5 @@ export default function UserAvatar({ user, small = false, categoryId }) {
         : name.slice(0, 1).toUpperCase()}
     </span>
   );
-  return categoryId && user?.id
-    ? <Link className="author-avatar-link" to={`/posts?${new URLSearchParams({ categoryId, authorId: user.id, authorName: name })}`} aria-label={`Xem bài đăng của ${name} trong cộng đồng này`}>{avatar}</Link>
-    : avatar;
+  return <UserPostsLink user={user} categoryId={categoryId} className="author-avatar-link">{avatar}</UserPostsLink>;
 }

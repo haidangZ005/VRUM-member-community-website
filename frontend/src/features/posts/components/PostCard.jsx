@@ -5,6 +5,7 @@ import { AttachedImages } from '../../../components/ui/ImageAttachments';
 import { useFeedActions } from '../hooks/usePosts';
 import { useAuthStore } from '../../../store/authStore';
 import UserAvatar from '../../../components/ui/UserAvatar';
+import UserPostsLink from '../../../components/ui/UserPostsLink';
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -20,7 +21,7 @@ export default function PostCard({ post, onHidden, onNotInterested }) {
     <article className="post-card">
       <div className="post-card-meta">
         <UserAvatar user={post.author} categoryId={post.category?.id} />
-        <div><strong>{authorName}</strong><span>{dateFormatter.format(new Date(post.createdAt))}</span></div>
+        <div><strong><UserPostsLink user={post.author} categoryId={post.category?.id}>{authorName}</UserPostsLink></strong><span>{dateFormatter.format(new Date(post.createdAt))}</span></div>
         {post.category ? <Link className="category-chip" to={`/posts?categoryId=${encodeURIComponent(post.category.id)}`}>{post.category.name}</Link> : <span className="category-chip">Chung</span>}
       </div>
       <Link className="post-card-link" to={`/posts/${post.id}`}>
