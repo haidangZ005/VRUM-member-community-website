@@ -35,6 +35,7 @@ const commentIdSchema = z.object({ id: z.uuid(), commentId: z.uuid() });
 const postIdSchema = z.object({ id: z.uuid('Mã bài viết không hợp lệ') });
 const categoryIdSchema = z.object({ id: z.uuid('Mã cộng đồng không hợp lệ') });
 const listPostsSchema = z.object({
+  authorId: z.uuid('Mã người đăng không hợp lệ').optional(),
   page: z.coerce.number().int().positive('Trang phải lớn hơn 0').optional(),
   limit: z.coerce.number().int().positive('Số bài mỗi trang phải lớn hơn 0').max(50, 'Tối đa 50 bài mỗi trang').optional(),
   categoryId: z.uuid('Chuyên mục không hợp lệ').optional(),

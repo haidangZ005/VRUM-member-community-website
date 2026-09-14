@@ -1,7 +1,7 @@
 class ListPosts {
   constructor({ postRepository }) { this.postRepository = postRepository; }
 
-  async execute({ page = 1, limit = 10, categoryId = null, viewerId = null, feed = 'all', sort } = {}) {
+  async execute({ page = 1, limit = 10, categoryId = null, authorId = null, viewerId = null, feed = 'all', sort } = {}) {
     const normalizedPage = Math.max(1, Number(page) || 1);
     const normalizedLimit = Math.min(50, Math.max(1, Number(limit) || 10));
     const normalizedFeed = categoryId ? 'all' : feed;
@@ -10,6 +10,7 @@ class ListPosts {
       page: normalizedPage,
       limit: normalizedLimit,
       categoryId: categoryId || null,
+      authorId,
       viewerId,
       feed: normalizedFeed,
       sort: normalizedSort,

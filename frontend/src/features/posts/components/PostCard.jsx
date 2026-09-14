@@ -19,7 +19,7 @@ export default function PostCard({ post, onHidden, onNotInterested }) {
   return (
     <article className="post-card">
       <div className="post-card-meta">
-        <UserAvatar user={post.author} />
+        <UserAvatar user={post.author} categoryId={post.category?.id} />
         <div><strong>{authorName}</strong><span>{dateFormatter.format(new Date(post.createdAt))}</span></div>
         {post.category ? <Link className="category-chip" to={`/posts?categoryId=${encodeURIComponent(post.category.id)}`}>{post.category.name}</Link> : <span className="category-chip">Chung</span>}
       </div>

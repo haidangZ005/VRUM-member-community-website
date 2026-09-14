@@ -229,9 +229,10 @@ class MemoryPostRepository {
     this.posts.push(created);
     return this.hydrate(created, post.authorId);
   }
-  async list({ page, limit, categoryId, viewerId, feed = 'all', sort = 'new' }) {
+  async list({ page, limit, categoryId, authorId = null, viewerId, feed = 'all', sort = 'new' }) {
     const effectiveFeed = viewerId || feed !== 'home' ? feed : 'popular';
     const filtered = this.posts.filter((post) => post.status === 'published' && (!categoryId || post.categoryId === categoryId)
+      && (!authorId || post.authorId === authorId)
       && (!viewerId || !this.hidden.some((item) => item.postId === post.id && item.userId === viewerId))
       && (effectiveFeed === 'all' || !viewerId || !this.categoryRepository.mutes.some((item) => item.categoryId === post.categoryId && item.userId === viewerId))
       && (effectiveFeed !== 'home' || !viewerId || this.categoryRepository.memberships.some((item) => item.categoryId === post.categoryId && item.userId === viewerId)

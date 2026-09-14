@@ -962,3 +962,10 @@ button, input, textarea, select { font: inherit; }
   .comment-composer { padding: 12px; }
   .comment-replies { margin-left: 6px; padding-left: 6px; }
 }
+.author-avatar-link { display: inline-flex; flex: none; align-self: flex-start; border-radius: 12px; }
+.author-avatar-link:focus-visible { outline: 2px solid var(--accent, #ff8456); outline-offset: 3px; }
+.feed-heading { gap: 16px; }
+.feed-heading > div:first-child { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .feed-heading { flex-direction: column; align-items: flex-start; }
+}

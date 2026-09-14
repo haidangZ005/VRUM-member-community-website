@@ -46,10 +46,10 @@ class PostgresPostRepository {
     return this.findById(rows[0].id, post.authorId, database);
   }
 
-  async list({ page, limit, categoryId, viewerId, feed = 'all', sort = 'new' }) {
+  async list({ page, limit, categoryId, authorId = null, viewerId, feed = 'all', sort = 'new' }) {
     const offset = (page - 1) * limit;
     const effectiveFeed = viewerId || feed !== 'home' ? feed : 'popular';
-    const params = [viewerId, categoryId, limit, offset, effectiveFeed];
+    const params = [viewerId, categoryId, limit, offset, effectiveFeed, authorId];
     const joinedFirst = effectiveFeed === 'home'
       ? `CASE WHEN EXISTS (
           SELECT 1 FROM community_memberships home_membership
@@ -72,6 +72,7 @@ class PostgresPostRepository {
         : 'p.created_at DESC';
     const filters = `p.status = 'published'
       AND ($2::uuid IS NULL OR p.category_id = $2)
+      AND ($6::uuid IS NULL OR p.author_id = $6)
       AND ($1::uuid IS NULL OR NOT EXISTS (
         SELECT 1 FROM hidden_posts hidden WHERE hidden.post_id = p.id AND hidden.user_id = $1
       ))
@@ -84,7 +85,7 @@ class PostgresPostRepository {
         SELECT 1 FROM not_interested_posts feedback
         WHERE feedback.category_id = p.category_id AND feedback.user_id = $1
       ))`;
-    const countFilters = filters.replaceAll('$5', '$3');
+    const countFilters = filters.replaceAll('$5', '$3').replaceAll('$6', '$4');
     const [itemsResult, countResult] = await Promise.all([
       pool.query(
         `${baseSelect}
@@ -94,7 +95,7 @@ class PostgresPostRepository {
       ),
       pool.query(
         `SELECT COUNT(*)::int AS total FROM posts p WHERE ${countFilters}`,
-        [viewerId, categoryId, effectiveFeed],
+        [viewerId, categoryId, effectiveFeed, authorId],
       ),
     ]);
     return { items: itemsResult.rows.map(mapPost), total: countResult.rows[0].total };

@@ -47,6 +47,29 @@ describe('Community API', () => {
     await agent.get(`/api/posts/${postId}`).set('Authorization', authorization).expect(404);
   });
 
+  test('lọc bài theo tác giả trong đúng cộng đồng, phân trang và bỏ bài đã xóa', async () => {
+    const categories = (await agent.get('/api/posts/categories').expect(200)).body.data;
+    const create = async (categoryId) => (await agent.post('/api/posts').set('Authorization', authorization).send({
+      title: 'Bài kiểm tra lọc tác giả', content: 'Nội dung bài kiểm tra trong cộng đồng.', categoryId,
+    }).expect(201)).body.data;
+    const first = await create(categories[0].id);
+    await create(categories[0].id);
+    await create(categories[1].id);
+    const removed = await create(categories[0].id);
+    await agent.delete(`/api/posts/${removed.id}`).set('Authorization', authorization).expect(200);
+    const query = { authorId: first.authorId, categoryId: categories[0].id, limit: 1 };
+    const page1 = (await request(app).get('/api/posts').query(query).expect(200)).body;
+    const page2 = (await request(app).get('/api/posts').query({ ...query, page: 2 }).expect(200)).body;
+    expect(page1.meta).toMatchObject({ total: 2, totalPages: 2 });
+    expect(page1.data).toHaveLength(1);
+    expect(page2.data).toHaveLength(1);
+    expect(page1.data[0].id).not.toBe(page2.data[0].id);
+    for (const post of [...page1.data, ...page2.data]) expect(post).toMatchObject({ authorId: first.authorId, categoryId: categories[0].id });
+    await request(app).get('/api/posts').query({ ...query, authorId: '00000000-0000-4000-8000-000000000000' }).expect(200)
+      .expect(({ body }) => expect(body.meta.total).toBe(0));
+    await request(app).get('/api/posts').query({ ...query, authorId: 'invalid' }).expect(422);
+  });
+
   test('bảo vệ endpoint và validate nội dung', async () => {
     await request(app).get('/api/posts').expect(200);
     await request(app).get('/api/posts/categories').expect(200);

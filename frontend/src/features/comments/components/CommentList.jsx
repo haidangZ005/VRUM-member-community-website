@@ -31,7 +31,7 @@ function CommentComposer({ postId, comment, parentId, onDone, onCancel }) {
   </form>;
 }
 
-function CommentItem({ postId, comment, parent, childrenByParent, userId, loginState, replyTo, clearReplyIntent }) {
+function CommentItem({ categoryId, postId, comment, parent, childrenByParent, userId, loginState, replyTo, clearReplyIntent }) {
   const [mode, setMode] = useState(userId && comment.id === replyTo ? 'reply' : null);
   const navigate = useNavigate();
   const remove = useCommentMutation(postId, 'remove');
@@ -39,7 +39,7 @@ function CommentItem({ postId, comment, parent, childrenByParent, userId, loginS
   const name = comment.author?.fullName || comment.author?.username || 'Thành viên';
   return <div className="comment-thread">
     <article className="comment-item" id={`comment-${comment.id}`}>
-      <UserAvatar user={comment.author} small />
+      <UserAvatar user={comment.author} small categoryId={categoryId} />
       <div className="comment-body"><div className="comment-meta"><strong>{name}</strong><time dateTime={comment.createdAt}>{dateFormatter.format(new Date(comment.createdAt))}</time></div>
         {parent && <a className="comment-parent-link" href={`#comment-${parent.id}`}><Reply size={13} /> Trả lời {parent.author?.fullName || parent.author?.username || 'Thành viên'}: <span>{parent.content}</span></a>}
         {mode === 'edit' ? <CommentComposer postId={postId} comment={comment} onDone={() => setMode(null)} onCancel={() => setMode(null)} /> : <p>{comment.content}</p>}
@@ -53,11 +53,11 @@ function CommentItem({ postId, comment, parent, childrenByParent, userId, loginS
         {mode === 'reply' && <CommentComposer postId={postId} parentId={comment.id} onDone={() => { setMode(null); clearReplyIntent(); }} onCancel={() => { setMode(null); clearReplyIntent(); }} />}
       </div>
     </article>
-    {childrenByParent.get(comment.id)?.length > 0 && <div className="comment-replies">{childrenByParent.get(comment.id).map((child) => <CommentItem key={child.id} postId={postId} comment={child} parent={comment} childrenByParent={childrenByParent} userId={userId} loginState={loginState} replyTo={replyTo} clearReplyIntent={clearReplyIntent} />)}</div>}
+    {childrenByParent.get(comment.id)?.length > 0 && <div className="comment-replies">{childrenByParent.get(comment.id).map((child) => <CommentItem categoryId={categoryId} key={child.id} postId={postId} comment={child} parent={comment} childrenByParent={childrenByParent} userId={userId} loginState={loginState} replyTo={replyTo} clearReplyIntent={clearReplyIntent} />)}</div>}
   </div>;
 }
 
-export default function CommentList({ postId }) {
+export default function CommentList({ postId, categoryId }) {
   const comments = useComments(postId);
   const location = useLocation();
   const navigate = useNavigate();
@@ -85,7 +85,7 @@ export default function CommentList({ postId }) {
     <div className="comment-list">
       {comments.isLoading && <p className="muted-copy">Đang tải bình luận…</p>}
       {comments.error && <div className="alert error" role="alert">Không thể tải bình luận. <button onClick={() => comments.refetch()}>Thử lại</button></div>}
-      {childrenByParent.get(null)?.map((comment) => <CommentItem key={comment.id} postId={postId} comment={comment} childrenByParent={childrenByParent} userId={userId} loginState={loginState} replyTo={replyTo} clearReplyIntent={clearReplyIntent} />)}
+      {childrenByParent.get(null)?.map((comment) => <CommentItem categoryId={categoryId} key={comment.id} postId={postId} comment={comment} childrenByParent={childrenByParent} userId={userId} loginState={loginState} replyTo={replyTo} clearReplyIntent={clearReplyIntent} />)}
       {!comments.isLoading && !comments.error && items.length === 0 && <div className="empty-comments">Chưa có bình luận. Hãy là người mở đầu cuộc trò chuyện.</div>}
     </div>
   </section>;
