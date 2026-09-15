@@ -1,0 +1,64 @@
+{
+  "source_revision": "e899ec3c73994d41971b276ad8d221a4c85c34fe",
+  "date": "2026-09-15",
+  "tool": "Archify",
+  "export_theme": "light",
+  "browser": "Brave (Chromium)",
+  "viewports": [
+    [
+      1440,
+      900
+    ],
+    [
+      1600,
+      1000
+    ],
+    [
+      1920,
+      1080
+    ],
+    [
+      2048,
+      1320
+    ]
+  ],
+  "visual_review_scope": "Light-theme READ screenshots at 1440x900 and 2048x1320, canonical exports and Word print derivatives.",
+  "diagrams": [
+    {
+      "diagram_type": "architecture",
+      "output": "architecture.html",
+      "specification_sha256": "73e755dee0189f3d9a6cc3b2d5fc2a90ae402c8afc78141a0290e57619735d5b",
+      "artifact_sha256": "c32ce82462a5ed1b18375e33a8abc623af5270afdb2ee7bc5ed8266d34d3a44e",
+      "validation": "9/9 showcase, 0 errors, 0 warnings",
+      "browser_evidence": "passed",
+      "visual_review": "passed",
+      "correction_rounds": 1
+    },
+    {
+      "diagram_type": "workflow",
+      "output": "workflow.html",
+      "specification_sha256": "5e31ae8166a61afc57a12725f9494300fcb9e0a2ef1a9411e1f65f780736f0df",
+      "artifact_sha256": "080d7809c99e40dcc206ef068261c90c49ed58fa1637a556bd7a361fc77c2447",
+      "validation": "9/9 showcase, 0 errors, 0 warnings",
+      "browser_evidence": "passed",
+      "visual_review": "passed",
+      "correction_rounds": 1
+    },
+    {
+      "diagram_type": "sequence",
+      "output": "sequence.html",
+      "specification_sha256": "a8317e62001df34c187f11f02e059d27bd63a2ae44add0d4c029d2867b012f93",
+      "artifact_sha256": "fd0bed5e93038672143bb826cbc29f66e10deb70196f24f962680f0bad4fd003",
+      "validation": "9/9 showcase, 0 errors, 0 warnings",
+      "browser_evidence": "passed",
+      "visual_review": "passed",
+      "correction_rounds": 2
+    }
+  ],
+  "notes": [
+    "Automated browser receipts and perceptual review are separate checks.",
+    "PNG and SVG files were exported from delivered HTML; HTML was not modified after delivery.",
+    "Word print derivatives use larger, darker lettering for readability while preserving components and relationships.",
+    "Reports and private workspace files are not included in this publication."
+  ]
+}

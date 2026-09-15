@@ -8,6 +8,8 @@ Dự án gồm frontend React, REST API Express và PostgreSQL. Giao diện hỗ
 
 ## Cách hoạt động
 
+Xem [bộ sơ đồ Architecture, Workflow và Sequence](docs/diagrams/README.md) với ảnh nền sáng hiển thị trực tiếp trên GitHub và bản HTML tương tác.
+
 ```text
 Trình duyệt React → REST API Express → PostgreSQL
 ```

@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Tóm tắt AI khi chưa có cache hợp lệ",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "viewBox": [
+      1050,
+      650
+    ]
+  },
+  "participants": [
+    {
+      "id": "reader_ui",
+      "type": "frontend",
+      "label": "React",
+      "sublabel": "Người đọc bấm tóm tắt"
+    },
+    {
+      "id": "summary_api",
+      "type": "backend",
+      "label": "Express API",
+      "sublabel": "Các use case tóm tắt"
+    },
+    {
+      "id": "summary_db",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "Bài viết và cache"
+    },
+    {
+      "id": "groq_llm",
+      "type": "external",
+      "label": "Groq API",
+      "sublabel": "Qua GroqSummaryService"
+    }
+  ],
+  "messages": [
+    {
+      "from": "reader_ui",
+      "to": "summary_api",
+      "y": 160,
+      "label": "GET /posts/:id/summary"
+    },
+    {
+      "from": "summary_api",
+      "to": "summary_db",
+      "y": 195,
+      "label": "Đọc bài và cache theo SHA-256"
+    },
+    {
+      "from": "summary_db",
+      "to": "summary_api",
+      "y": 230,
+      "label": "Bài published; cache chưa có",
+      "variant": "return"
+    },
+    {
+      "from": "summary_api",
+      "to": "reader_ui",
+      "y": 265,
+      "label": "200 · data: null",
+      "variant": "return"
+    },
+    {
+      "from": "reader_ui",
+      "to": "summary_api",
+      "y": 300,
+      "label": "POST /posts/:id/summary",
+      "variant": "emphasis"
+    },
+    {
+      "from": "summary_api",
+      "to": "summary_db",
+      "y": 335,
+      "label": "Kiểm tra lại bài và cache"
+    },
+    {
+      "from": "summary_db",
+      "to": "summary_api",
+      "y": 370,
+      "label": "Chưa có bản cùng phiên bản",
+      "variant": "return"
+    },
+    {
+      "from": "summary_api",
+      "to": "groq_llm",
+      "y": 405,
+      "label": "HTTPS /chat/completions",
+      "variant": "emphasis"
+    },
+    {
+      "from": "groq_llm",
+      "to": "summary_api",
+      "y": 440,
+      "label": "Nội dung tóm tắt",
+      "variant": "return"
+    },
+    {
+      "from": "summary_api",
+      "to": "summary_db",
+      "y": 475,
+      "label": "Lưu summary + sourceVersion"
+    },
+    {
+      "from": "summary_db",
+      "to": "summary_api",
+      "y": 510,
+      "label": "Bản tóm tắt đã lưu",
+      "variant": "return"
+    },
+    {
+      "from": "summary_api",
+      "to": "reader_ui",
+      "y": 545,
+      "label": "200 · cached: false",
+      "variant": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Đường dẫn và cache",
+      "items": [
+        "Các đường dẫn bài viết có tiền tố /api.",
+        "Có cache hợp lệ: trả ngay, không gọi Groq."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Điều phối ở backend",
+      "items": [
+        "POST giới hạn 20 yêu cầu / 10 phút.",
+        "Gộp yêu cầu cùng phiên bản trong một tiến trình."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Nhánh lỗi",
+      "items": [
+        "Bài đã gỡ: 404. Dịch vụ lỗi: cho phép thử lại.",
+        "Chỉ lưu đầu ra hợp lệ và không bị cắt vì hết token."
+      ]
+    }
+  ]
+}

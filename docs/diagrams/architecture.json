@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Kiến trúc hệ thống VRUM",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1160,
+      620
+    ]
+  },
+  "components": [
+    {
+      "id": "vrum_web",
+      "type": "frontend",
+      "label": "Giao diện React",
+      "sublabel": "Router · Query · Zustand",
+      "pos": [
+        40,
+        70
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "vrum_http",
+      "type": "backend",
+      "label": "REST API Express",
+      "sublabel": "Middleware · Zod · Controller",
+      "pos": [
+        450,
+        70
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "vrum_cases",
+      "type": "backend",
+      "label": "Use case nghiệp vụ",
+      "sublabel": "Tài khoản · Nội dung · AI",
+      "pos": [
+        450,
+        280
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "vrum_domain",
+      "type": "backend",
+      "label": "Domain",
+      "sublabel": "User · Category · Post · Comment",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "vrum_groq",
+      "type": "external",
+      "label": "Groq API",
+      "sublabel": "Mô hình tóm tắt văn bản",
+      "pos": [
+        890,
+        280
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "vrum_store",
+      "type": "backend",
+      "label": "Repository PostgreSQL",
+      "sublabel": "Truy vấn · Unit of Work",
+      "pos": [
+        450,
+        490
+      ],
+      "size": [
+        260,
+        80
+      ]
+    },
+    {
+      "id": "vrum_db",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "Nội dung · Phiên · Cache AI",
+      "pos": [
+        890,
+        490
+      ],
+      "size": [
+        240,
+        80
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "vrum_web",
+      "to": "vrum_http",
+      "label": "HTTP /api",
+      "variant": "emphasis"
+    },
+    {
+      "from": "vrum_http",
+      "to": "vrum_cases",
+      "label": "Gọi use case",
+      "labelDy": 75,
+      "variant": "emphasis"
+    },
+    {
+      "from": "vrum_cases",
+      "to": "vrum_domain",
+      "label": "Entity / quy tắc"
+    },
+    {
+      "from": "vrum_cases",
+      "to": "vrum_store",
+      "label": "Đọc / ghi",
+      "labelDy": 75,
+      "variant": "emphasis"
+    },
+    {
+      "from": "vrum_store",
+      "to": "vrum_db",
+      "label": "SQL",
+      "variant": "emphasis"
+    },
+    {
+      "from": "vrum_cases",
+      "to": "vrum_groq",
+      "label": "HTTPS qua service"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Giao diện và truy cập",
+      "items": [
+        "Khách đọc bài; thành viên tương tác; admin kiểm duyệt.",
+        "Bấm tên hoặc avatar lọc bài theo người và cộng đồng."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Tính nhất quán",
+      "items": [
+        "JWT và kiểm tra quyền tại API; refresh cookie HttpOnly.",
+        "Nội dung và thông báo được ghi trong transaction."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Tóm tắt AI",
+      "items": [
+        "GroqSummaryService gọi Groq ở backend.",
+        "Cache PostgreSQL kiểm tra SHA-256 tiêu đề và nội dung."
+      ]
+    }
+  ]
+}

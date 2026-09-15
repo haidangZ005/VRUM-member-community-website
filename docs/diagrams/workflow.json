@@ -1,0 +1,190 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Quy trình đăng bài trong cộng đồng VRUM",
+    "quality_profile": "showcase",
+    "legend": {"entries": {"frontend": {"label": "Giao diện"}, "backend": {"label": "Nghiệp vụ"}, "security": {"label": "Kiểm tra / lỗi"}, "database": {"label": "Dữ liệu"}}}
+  },
+  "lanes": [
+    {
+      "id": "member",
+      "label": "Thành viên"
+    },
+    {
+      "id": "server",
+      "label": "Backend Express"
+    },
+    {
+      "id": "storage",
+      "label": "PostgreSQL"
+    },
+    {
+      "id": "rejected",
+      "label": "Xử lý lỗi",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "compose",
+    "submit",
+    "validate",
+    "community",
+    "transaction",
+    "published"
+  ],
+  "nodes": [
+    {
+      "id": "compose",
+      "lane": "member",
+      "col": 0,
+      "type": "frontend",
+      "label": "Mở cộng đồng",
+      "sublabel": "Đăng nhập · Tạo bài",
+      "width": 180
+    },
+    {
+      "id": "submit",
+      "lane": "member",
+      "col": 1,
+      "type": "frontend",
+      "label": "Soạn và gửi",
+      "sublabel": "Tiêu đề · Nội dung · Ảnh",
+      "width": 190
+    },
+    {
+      "id": "validate",
+      "lane": "server",
+      "col": 1,
+      "type": "security",
+      "label": "Kiểm tra yêu cầu",
+      "sublabel": "JWT · Tài khoản · Zod",
+      "width": 190
+    },
+    {
+      "id": "community",
+      "lane": "server",
+      "col": 2,
+      "type": "backend",
+      "label": "Kiểm tra cộng đồng",
+      "sublabel": "categoryId phải tồn tại",
+      "width": 195
+    },
+    {
+      "id": "transaction",
+      "lane": "storage",
+      "col": 3,
+      "type": "database",
+      "label": "Lưu transaction",
+      "sublabel": "Bài viết và thông báo",
+      "width": 190
+    },
+    {
+      "id": "published",
+      "lane": "member",
+      "col": 4,
+      "type": "frontend",
+      "label": "Hiển thị bài mới",
+      "sublabel": "API trả HTTP 201",
+      "width": 180
+    },
+    {
+      "id": "invalid",
+      "lane": "rejected",
+      "col": 1,
+      "type": "security",
+      "label": "Từ chối yêu cầu",
+      "sublabel": "401 hoặc 422",
+      "width": 180
+    },
+    {
+      "id": "missing",
+      "lane": "rejected",
+      "col": 2,
+      "type": "security",
+      "label": "Không có cộng đồng",
+      "sublabel": "HTTP 404",
+      "width": 195
+    },
+    {
+      "id": "rollback",
+      "lane": "rejected",
+      "col": 3,
+      "type": "database",
+      "label": "Rollback khi lỗi",
+      "sublabel": "Không ghi dở dang",
+      "width": 190
+    }
+  ],
+  "edges": [
+    {
+      "from": "compose",
+      "to": "submit",
+      "label": "Nhập nội dung",
+      "role": "main"
+    },
+    {
+      "from": "submit",
+      "to": "validate",
+      "label": "POST /api/posts",
+      "role": "main"
+    },
+    {
+      "from": "validate",
+      "to": "community",
+      "label": "Hợp lệ",
+      "role": "main"
+    },
+    {
+      "from": "community",
+      "to": "transaction",
+      "label": "Tồn tại",
+      "role": "main"
+    },
+    {
+      "from": "transaction",
+      "to": "published",
+      "label": "Commit thành công",
+      "role": "return"
+    },
+    {
+      "from": "validate",
+      "to": "invalid",
+      "label": "Không hợp lệ",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "community",
+      "to": "missing",
+      "label": "Không tìm thấy",
+      "role": "error",
+      "variant": "security"
+    },
+    {
+      "from": "transaction",
+      "to": "rollback",
+      "label": "Ghi thất bại",
+      "role": "error",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Điều kiện đăng bài",
+      "items": [
+        "Bài mới phải thuộc một cộng đồng còn tồn tại.",
+        "Tác giả lấy từ phiên đăng nhập đã xác thực."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Ghi dữ liệu an toàn",
+      "items": [
+        "CreatePost dùng PostgresUnitOfWork.",
+        "Lỗi trong transaction khiến toàn bộ lần ghi bị rollback."
+      ]
+    }
+  ]
+}
