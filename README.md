@@ -2,7 +2,9 @@
 
 > Làn gió mới của diễn đàn Việt — The Fresh Air of VN Forums.
 
-Diễn đàn cộng đồng với đăng bài, bình luận, bình chọn, tìm kiếm, tóm tắt AI và quản trị nội dung. Sử dụng **React, Express và PostgreSQL**, hỗ trợ giao diện sáng/tối.
+Đây là mã nguồn của **VRUM**, một diễn đàn cộng đồng hiện đại dành cho việc thảo luận, chia sẻ kiến thức và kết nối những người có cùng mối quan tâm. Thành viên có thể tạo tài khoản, cập nhật hồ sơ, đăng bài, bình luận và thích nội dung; quản trị viên có khu vực riêng để quản lý thành viên, bài viết, bình luận và chuyên mục.
+
+Dự án sử dụng **React, Express và PostgreSQL**, hỗ trợ giao diện sáng/tối và tóm tắt bài viết bằng AI.
 
 [Sơ đồ Architecture, Workflow và Sequence](docs/diagrams/README.md)
 
