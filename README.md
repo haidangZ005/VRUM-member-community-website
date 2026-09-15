@@ -52,6 +52,20 @@ Truy cập `http://localhost:5173`. API chạy tại `http://localhost:4000`, he
 
 ## Tạo dữ liệu ban đầu
 
+### Chạy cả ba bước bằng một lệnh
+
+Sau khi cấu hình `DATABASE_URL` và chạy migration, đặt thông tin admin và mật khẩu demo trong `backend/.env` hoặc biến môi trường: `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `DEMO_PASSWORD`. Đổi mật khẩu ví dụ trước khi chạy.
+
+Tại thư mục gốc dự án, chạy:
+
+```powershell
+npm run seed:all
+```
+
+Lệnh chạy lần lượt **admin → demo → tech** và dừng nếu một bước lỗi. Các bước đã thành công trước đó không tự hoàn tác. Chỉ dùng dữ liệu demo cho môi trường phát triển; chạy lại vẫn áp dụng các quy tắc cập nhật của từng seed bên dưới.
+
+### Chạy riêng từng bước
+
 Tạo hoặc cập nhật admin:
 
 ```powershell
