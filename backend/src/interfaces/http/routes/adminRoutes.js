@@ -1,5 +1,4 @@
 const express = require('express');
-const asyncHandler = require('../../../shared/utils/asyncHandler');
 const validateRequest = require('../middlewares/validateRequest');
 const {
   idParamSchema, memberListSchema, postModerationListSchema, commentModerationListSchema, moderationSchema, categorySchema,
@@ -8,18 +7,18 @@ const {
 function makeAdminRoutes(controller, authMiddleware, roleGuard) {
   const router = express.Router();
   router.use(authMiddleware, roleGuard('admin'));
-  router.get('/dashboard', asyncHandler(controller.dashboard));
-  router.get('/members', validateRequest(memberListSchema, 'query'), asyncHandler(controller.listMembers));
-  router.patch('/members/:id/lock', validateRequest(idParamSchema, 'params'), asyncHandler(controller.lockMember));
-  router.patch('/members/:id/unlock', validateRequest(idParamSchema, 'params'), asyncHandler(controller.unlockMember));
-  router.get('/posts', validateRequest(postModerationListSchema, 'query'), asyncHandler(controller.listPosts));
-  router.delete('/posts/:id', validateRequest(idParamSchema, 'params'), validateRequest(moderationSchema), asyncHandler(controller.deletePost));
-  router.get('/comments', validateRequest(commentModerationListSchema, 'query'), asyncHandler(controller.listComments));
-  router.delete('/comments/:id', validateRequest(idParamSchema, 'params'), validateRequest(moderationSchema), asyncHandler(controller.deleteComment));
-  router.get('/categories', asyncHandler(controller.listCategories));
-  router.post('/categories', validateRequest(categorySchema), asyncHandler(controller.createCategory));
-  router.put('/categories/:id', validateRequest(idParamSchema, 'params'), validateRequest(categorySchema), asyncHandler(controller.updateCategory));
-  router.delete('/categories/:id', validateRequest(idParamSchema, 'params'), asyncHandler(controller.deleteCategory));
+  router.get('/dashboard', controller.dashboard);
+  router.get('/members', validateRequest(memberListSchema, 'query'), controller.listMembers);
+  router.patch('/members/:id/lock', validateRequest(idParamSchema, 'params'), controller.lockMember);
+  router.patch('/members/:id/unlock', validateRequest(idParamSchema, 'params'), controller.unlockMember);
+  router.get('/posts', validateRequest(postModerationListSchema, 'query'), controller.listPosts);
+  router.delete('/posts/:id', validateRequest(idParamSchema, 'params'), validateRequest(moderationSchema), controller.deletePost);
+  router.get('/comments', validateRequest(commentModerationListSchema, 'query'), controller.listComments);
+  router.delete('/comments/:id', validateRequest(idParamSchema, 'params'), validateRequest(moderationSchema), controller.deleteComment);
+  router.get('/categories', controller.listCategories);
+  router.post('/categories', validateRequest(categorySchema), controller.createCategory);
+  router.put('/categories/:id', validateRequest(idParamSchema, 'params'), validateRequest(categorySchema), controller.updateCategory);
+  router.delete('/categories/:id', validateRequest(idParamSchema, 'params'), controller.deleteCategory);
   return router;
 }
 
