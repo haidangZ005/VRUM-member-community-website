@@ -2,7 +2,6 @@ process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
 const createApp = require('../../src/main/app');
-const makeUseCases = require('../../src/main/factories/makeUseCases');
 const { makeFakeDependencies } = require('../helpers/fakes');
 
 describe('Community API', () => {
@@ -12,7 +11,7 @@ describe('Community API', () => {
 
   beforeEach(async () => {
     const dependencies = makeFakeDependencies();
-    app = createApp({ dependencies, useCases: makeUseCases(dependencies), tokenService: dependencies.tokenService });
+    app = createApp({ dependencies });
     agent = request.agent(app);
     await agent.post('/api/auth/register').send({ username: 'haidang', email: 'dang@example.com', password: 'Matkhau123', fullName: 'Hải Đăng' });
     const login = await agent.post('/api/auth/login').send({ email: 'dang@example.com', password: 'Matkhau123' });
