@@ -2,7 +2,6 @@ process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
 const createApp = require('../../src/main/app');
-const makeUseCases = require('../../src/main/factories/makeUseCases');
 const { makeFakeDependencies } = require('../helpers/fakes');
 
 async function register(app, username) {
@@ -15,7 +14,7 @@ async function register(app, username) {
 describe('Notifications API', () => {
   test('tạo notification cho comment, reply, mention và hỗ trợ read/preferences', async () => {
     const dependencies = makeFakeDependencies();
-    const app = createApp({ dependencies, useCases: makeUseCases(dependencies), tokenService: dependencies.tokenService });
+    const app = createApp({ dependencies });
     const owner = await register(app, 'notify_owner');
     const author = await register(app, 'notify_author');
     const mentioned = await register(app, 'notify_mentioned');
