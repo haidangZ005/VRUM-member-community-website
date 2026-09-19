@@ -2,7 +2,6 @@ process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
 const createApp = require('../../src/main/app');
-const makeUseCases = require('../../src/main/factories/makeUseCases');
 const { makeFakeDependencies } = require('../helpers/fakes');
 
 describe('MVP journey', () => {
@@ -11,7 +10,7 @@ describe('MVP journey', () => {
     await dependencies.userRepository.create({
       username: 'moderator', email: 'moderator@example.com', passwordHash: 'hashed:Admin12345', fullName: 'Điều phối viên', role: 'admin',
     });
-    const app = createApp({ dependencies, useCases: makeUseCases(dependencies), tokenService: dependencies.tokenService });
+    const app = createApp({ dependencies });
     const member = request.agent(app);
     const admin = request.agent(app);
 
