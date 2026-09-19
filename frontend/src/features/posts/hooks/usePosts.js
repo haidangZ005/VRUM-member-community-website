@@ -94,14 +94,12 @@ export function useSummarizePost(id) {
   return useMutation({ mutationFn: async () => await postApi.getSummary(id) || postApi.summarize(id) });
 }
 
-export function useCreatePost({ stayOnFeed = false } = {}) {
-  const navigate = useNavigate();
+export function useCreatePost() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: postApi.create,
-    onSuccess: (post) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      if (!stayOnFeed) navigate(`/posts/${post.id}`);
     },
   });
 }
