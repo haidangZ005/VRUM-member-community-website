@@ -1,4 +1,7 @@
 process.env.NODE_ENV = 'test';
+const shouldRun = process.env.VRUM_SMOKE === 'true' && Boolean(process.env.TEST_DATABASE_URL);
+if (shouldRun) process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+
 const request = require('supertest');
 const pool = require('../../src/infrastructure/database/postgres/connection');
 const createApp = require('../../src/main/app');
@@ -6,36 +9,36 @@ const makeDependencies = require('../../src/main/factories/makeDependencies');
 const User = require('../../src/domain/entities/User');
 const Category = require('../../src/domain/entities/Category');
 
-// Opt-in, rollback-only: safe against a local development database after migrations.
-const smoke = process.env.VRUM_SMOKE === 'true' ? describe : describe.skip;
+// Opt-in against a migrated test database; real transactions need committed fixtures.
+const smoke = shouldRun ? describe : describe.skip;
 smoke('Post and comment API with real PostgreSQL', () => {
-  let client;
-  let originalQuery;
+  const users = [];
   let app;
   let owner;
   let other;
   let category;
   const image = `data:image/jpeg;base64,${Buffer.from([255, 216, 255, 224, 0, 0, 255, 217]).toString('base64')}`;
   beforeAll(async () => {
-    client = await pool.connect();
-    await client.query('BEGIN');
-    originalQuery = pool.query;
-    pool.query = client.query.bind(client);
     const dependencies = makeDependencies();
     app = createApp({ dependencies });
     const suffix = Date.now();
-    const users = [];
     for (const name of ['owner', 'other']) {
       const user = await dependencies.userRepository.create(new User({ username: `qa_${name}_${suffix}`, email: `qa_${name}_${suffix}@example.test`, passwordHash: 'unused-test-only' }));
-      users.push({ id: user.id, token: dependencies.tokenService.generateAccessToken({ sub: user.id, role: 'member' }) });
+      users.push(user);
+      user.token = dependencies.tokenService.generateAccessToken({ sub: user.id, role: 'member' });
     }
     [owner, other] = users;
     category = await dependencies.categoryRepository.create(new Category({ name: `QA ${suffix}`, ownerId: owner.id }));
   });
   afterAll(async () => {
-    if (originalQuery) pool.query = originalQuery;
-    if (client) { await client.query('ROLLBACK'); client.release(); }
-    await pool.end();
+    const userIds = users.map((user) => user.id);
+    try {
+      // Owner IDs also cover a category inserted before fixture setup fails.
+      await pool.query('DELETE FROM categories WHERE owner_id = ANY($1::uuid[])', [userIds]);
+      await pool.query('DELETE FROM users WHERE id = ANY($1::uuid[])', [userIds]);
+    } finally {
+      await pool.end();
+    }
   });
   const api = (method, url, actor = owner) => request(app)[method](`/api/posts${url}`).set('Authorization', `Bearer ${actor.token}`);
   test('image persistence, editing, replies and ownership', async () => {
