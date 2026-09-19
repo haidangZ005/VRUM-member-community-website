@@ -5,6 +5,8 @@
 > **Tech stack:** Node.js (Backend) · React (Frontend) · PostgreSQL (Database) · Clean Architecture
 > **Vai trò:** SM: Vũ Hải Đăng · PO: Nguyễn Thành Đạt · DEV chính: Vũ Hải Đăng, Nguyễn Thành Đạt
 
+> **Phạm vi tài liệu:** Đây là bản thiết kế ban đầu, không phải danh mục đầy đủ của phiên bản đang chạy. Các bảng backlog, cây thư mục và thiết kế API/DB bên dưới giữ vai trò tham khảo lịch sử; dùng [README](README.md), mã nguồn và migration để tra cứu triển khai hiện tại. Phần contract và ví dụ dependency injection dưới đây đã được cập nhật theo cách triển khai hiện hành.
+
 ---
 
 ## Mục lục
@@ -94,9 +96,10 @@ Clean Architecture (Robert C. Martin) chia hệ thống thành các lớp đồn
 [interfaces/http/controllers/AuthController.js]  ← nhận request, gọi use case
       ▼
 [application/use-cases/auth/LoginUser.js]     ← logic: kiểm tra user tồn tại,
-      │   ├─ gọi IUserRepository.findByEmail()      so khớp mật khẩu, tạo token
-      │   ├─ gọi IHashService.compare()
-      │   └─ gọi ITokenService.generate()
+      │   ├─ gọi userRepository.findByEmail()      so khớp mật khẩu, tạo token
+      │   ├─ gọi hashService.compare()
+      │   ├─ gọi tokenService.generateAccessToken() / generateRefreshToken()
+      │   └─ gọi refreshTokenRepository.create()  lưu hash của refresh token
       ▼
 [domain/entities/User.js]                     ← entity thuần, không phụ thuộc gì
       ▲
@@ -106,31 +109,24 @@ Clean Architecture (Robert C. Martin) chia hệ thống thành các lớp đồn
 [infrastructure/services/JwtTokenService.js]
 ```
 
-**Điểm mấu chốt:** `LoginUser.js` (Use Case) chỉ biết đến **interface** `IUserRepository`, không biết PostgreSQL là gì. Nhờ vậy có thể đổi database hoặc mock repository khi viết unit test mà không cần sửa logic nghiệp vụ.
+**Điểm mấu chốt:** `LoginUser.js` nhận object `userRepository` qua constructor và chỉ gọi các phương thức trong contract, không biết PostgreSQL là gì. Đây là duck typing của JavaScript, không cần import hay `extends` lớp `I*`. Nhờ vậy có thể đổi database hoặc mock repository mà không sửa logic nghiệp vụ. Xem [contract của các dependency](backend/README.md#contract-của-các-dependency); các lớp stub `I*` không được sử dụng đã được loại bỏ.
 
 ### 2.3. Dependency Injection (Composition Root)
 
-Việc "nối" interface với cài đặt cụ thể diễn ra tại **một nơi duy nhất**: `src/main/factories/`. Ví dụ:
+Việc nối contract với cài đặt cụ thể diễn ra tại `src/main/factories/`: `makeDependencies.js` tạo repository/service, còn `makeUseCases.js` inject chúng vào use case. Ví dụ rút gọn từ `makeUseCases.js`:
 
 ```js
-// src/main/factories/makeLoginUser.js
-const PostgresUserRepository = require('../../infrastructure/database/postgres/repositories/PostgresUserRepository');
-const BcryptHashService = require('../../infrastructure/services/BcryptHashService');
-const JwtTokenService = require('../../infrastructure/services/JwtTokenService');
+// src/main/factories/makeUseCases.js (trích phần đăng nhập)
 const LoginUser = require('../../application/use-cases/auth/LoginUser');
 
-function makeLoginUser() {
-  return new LoginUser({
-    userRepository: new PostgresUserRepository(),
-    hashService: new BcryptHashService(),
-    tokenService: new JwtTokenService(),
-  });
+function makeUseCases({ userRepository, hashService, tokenService, refreshTokenRepository }) {
+  return { loginUser: new LoginUser({ userRepository, hashService, tokenService, refreshTokenRepository }) };
 }
 
-module.exports = makeLoginUser;
+module.exports = makeUseCases;
 ```
 
-Controller chỉ gọi `makeLoginUser()` — không tự new các class infrastructure. Đây chính là cách Clean Architecture giữ cho Use Case "sạch", không lẫn chi tiết kỹ thuật.
+`src/main/app.js` truyền các use case đã lắp ráp vào route/controller; controller chỉ gọi `useCases.loginUser.execute(...)`, không tự tạo các class infrastructure. Đây chính là cách Clean Architecture giữ cho use case không lẫn chi tiết kỹ thuật.
 
 ---
 
@@ -184,12 +180,6 @@ backend/
 │   │   │   ├── Comment.js
 │   │   │   ├── Category.js
 │   │   │   └── Like.js
-│   │   ├── repositories/                # Interface (contract) — KHÔNG cài đặt
-│   │   │   ├── IUserRepository.js
-│   │   │   ├── IPostRepository.js
-│   │   │   ├── ICommentRepository.js
-│   │   │   ├── ICategoryRepository.js
-│   │   │   └── ILikeRepository.js
 │   │   └── errors/
 │   │       ├── DomainError.js
 │   │       ├── NotFoundError.js
@@ -227,14 +217,10 @@ backend/
 │   │   │       ├── UpdateCategory.js
 │   │   │       ├── DeleteCategory.js
 │   │   │       └── GetDashboardStats.js # SCRUM-36
-│   │   ├── dtos/
-│   │   │   ├── RegisterUserDTO.js
-│   │   │   ├── CreatePostDTO.js
-│   │   │   └── ...
-│   │   └── interfaces/                  # Ports cho service ngoài (không phải DB)
-│   │       ├── IHashService.js
-│   │       ├── ITokenService.js
-│   │       └── IEmailService.js
+│   │   └── dtos/
+│   │       ├── RegisterUserDTO.js
+│   │       ├── CreatePostDTO.js
+│   │       └── ...
 │   │
 │   ├── infrastructure/                  # ===== LỚP 4: FRAMEWORKS & DRIVERS =====
 │   │   ├── database/
@@ -249,7 +235,7 @@ backend/
 │   │   │       │   └── 006_create_tokens.sql
 │   │   │       ├── seeds/
 │   │   │       │   └── seed_admin_user.sql
-│   │   │       └── repositories/        # Cài đặt cụ thể của domain/repositories
+│   │   │       └── repositories/        # Cài đặt contract repository (backend/README.md)
 │   │   │           ├── PostgresUserRepository.js
 │   │   │           ├── PostgresPostRepository.js
 │   │   │           ├── PostgresCommentRepository.js
@@ -299,7 +285,6 @@ backend/
 │   │
 │   └── shared/
 │       ├── utils/
-│       │   ├── asyncHandler.js          # Wrap async controller, tự bắt lỗi
 │       │   └── pagination.js
 │       └── constants/
 │           ├── roles.js                 # { MEMBER: 'member', ADMIN: 'admin' }
@@ -756,7 +741,7 @@ Test theo đúng 4 lớp kiến trúc, ưu tiên test nhiều nhất ở lớp t
 | Lớp | Loại test | Công cụ | Ví dụ |
 |---|---|---|---|
 | Domain | Unit test | Jest | Entity `User` tự validate email hợp lệ |
-| Application (Use Case) | Unit test (mock repository) | Jest | `LoginUser.test.js` — mock `IUserRepository`, `IHashService` |
+| Application (Use Case) | Unit test (mock repository) | Jest | Mock các object dependency mà `LoginUser` nhận qua constructor |
 | Infrastructure (Repository) | Integration test | Jest + PostgreSQL test DB | `PostgresUserRepository.test.js` — chạy thật với DB test |
 | Interface (API) | E2E test | Supertest | Gửi request thật đến `/api/auth/login`, kiểm tra response |
 
@@ -767,14 +752,24 @@ Test theo đúng 4 lớp kiến trúc, ưu tiên test nhiều nhất ở lớp t
 const LoginUser = require('../../../../src/application/use-cases/auth/LoginUser');
 
 test('đăng nhập thành công trả về access token', async () => {
-  const mockUserRepo = { findByEmail: jest.fn().mockResolvedValue({ id: '1', password_hash: 'hashed' }) };
+  const mockUserRepo = { findByEmail: jest.fn().mockResolvedValue({
+    id: '1', passwordHash: 'hashed', status: 'active', role: 'member',
+    toPublicJSON: () => ({ id: '1', role: 'member' }),
+  }) };
   const mockHashService = { compare: jest.fn().mockResolvedValue(true) };
-  const mockTokenService = { generate: jest.fn().mockReturnValue('fake-token') };
+  const mockTokenService = {
+    generateAccessToken: jest.fn().mockReturnValue('fake-token'),
+    generateRefreshToken: jest.fn().mockReturnValue('fake-refresh'),
+    hashToken: jest.fn().mockReturnValue('refresh-hash'),
+    getExpiration: jest.fn().mockReturnValue(new Date('2030-01-01')),
+  };
+  const mockRefreshTokenRepo = { create: jest.fn().mockResolvedValue(undefined) };
 
   const loginUser = new LoginUser({
     userRepository: mockUserRepo,
     hashService: mockHashService,
     tokenService: mockTokenService,
+    refreshTokenRepository: mockRefreshTokenRepo,
   });
 
   const result = await loginUser.execute({ email: 'a@test.com', password: '123456' });
@@ -819,7 +814,7 @@ VITE_API_BASE_URL=http://localhost:4000/api
 ```json
 {
   "scripts": {
-    "dev": "nodemon src/main/server.js",
+    "dev": "node --watch src/main/server.js",
     "start": "node src/main/server.js",
     "migrate:up": "node-pg-migrate up",
     "migrate:down": "node-pg-migrate down",
