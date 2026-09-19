@@ -5,7 +5,7 @@ import { useCreatePost } from '../../features/posts/hooks/usePosts';
 
 export default function CreatePostDialog({ category, onClose }) {
   const dialog = useRef(null);
-  const create = useCreatePost({ stayOnFeed: true });
+  const create = useCreatePost();
   useEffect(() => {
     const element = dialog.current;
     element.showModal();
