@@ -2,13 +2,12 @@ process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
 const createApp = require('../../src/main/app');
-const makeUseCases = require('../../src/main/factories/makeUseCases');
 const { makeFakeDependencies } = require('../helpers/fakes');
 
 describe('Global search API', () => {
   test('tìm nội dung công khai theo loại, cộng đồng và tác giả mà không lộ dữ liệu riêng tư', async () => {
     const dependencies = makeFakeDependencies();
-    const app = createApp({ dependencies, useCases: makeUseCases(dependencies), tokenService: dependencies.tokenService });
+    const app = createApp({ dependencies });
     const agent = request.agent(app);
     await agent.post('/api/auth/register').send({ username: 'search_author', email: 'search@example.com', password: 'Matkhau123', fullName: 'Tác giả tìm kiếm' });
     const login = await agent.post('/api/auth/login').send({ email: 'search@example.com', password: 'Matkhau123' });
