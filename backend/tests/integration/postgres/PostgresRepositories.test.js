@@ -16,6 +16,7 @@ const PostgresPostRepository = require('../../../src/infrastructure/database/pos
 const PostgresCommentRepository = require('../../../src/infrastructure/database/postgres/repositories/PostgresCommentRepository');
 const PostgresCategoryRepository = require('../../../src/infrastructure/database/postgres/repositories/PostgresCategoryRepository');
 const PostgresVoteRepository = require('../../../src/infrastructure/database/postgres/repositories/PostgresVoteRepository');
+const PostgresNotificationRepository = require('../../../src/infrastructure/database/postgres/repositories/PostgresNotificationRepository');
 
 const describeIntegration = shouldRun ? describe : describe.skip;
 
@@ -41,6 +42,18 @@ describeIntegration('PostgreSQL repositories', () => {
     await pool.query('TRUNCATE community_memberships, post_votes, comment_votes, comments, posts, categories, password_reset_tokens, refresh_tokens, users CASCADE');
   });
   afterAll(async () => { await pool.end(); });
+
+  test('tạo thông báo bằng SQL thật, giữ chống trùng và tùy chọn nhận tin', async () => {
+    const recipient = await users.create(new User({ username: 'notification_recipient', email: 'recipient@example.com', passwordHash: 'hashed-password' }));
+    const actor = await users.create(new User({ username: 'notification_actor', email: 'actor@example.com', passwordHash: 'hashed-password' }));
+    const notifications = new PostgresNotificationRepository();
+    const notification = { recipientId: recipient.id, actorId: actor.id, type: 'COMMENT_REPLY', dedupeKey: 'integration-reply', payload: { excerpt: 'Trả lời bình luận' } };
+    expect(await notifications.create(notification)).toMatchObject({ type: 'COMMENT_REPLY', payload: notification.payload });
+    expect(await notifications.create(notification)).toBeNull();
+    await notifications.updatePreferences(recipient.id, [{ type: 'COMMENT_REPLY', inAppEnabled: false }]);
+    expect(await notifications.create({ ...notification, dedupeKey: 'disabled-reply' })).toBeNull();
+    expect(await notifications.unreadCount(recipient.id)).toBe(1);
+  });
 
   test('lưu, tìm kiếm và cập nhật trạng thái thành viên', async () => {
     const member = await users.create(new User({
