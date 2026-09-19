@@ -10,7 +10,7 @@ Dự án sử dụng **React, Express và PostgreSQL**, hỗ trợ giao diện s
 
 ## Cài đặt
 
-Cần Node.js 20+ và PostgreSQL 16+. Chạy các lệnh tại thư mục gốc dự án.
+Cần Node.js 20.19+ hoặc 22.12+ và PostgreSQL 16+. Chạy các lệnh tại thư mục gốc dự án.
 
 ```powershell
 npm run install:all
