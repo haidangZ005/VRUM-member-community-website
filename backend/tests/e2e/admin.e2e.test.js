@@ -2,7 +2,6 @@ process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
 const createApp = require('../../src/main/app');
-const makeUseCases = require('../../src/main/factories/makeUseCases');
 const { makeFakeDependencies } = require('../helpers/fakes');
 
 describe('Admin API', () => {
@@ -21,7 +20,7 @@ describe('Admin API', () => {
     await dependencies.userRepository.create({
       username: 'admin', email: 'admin@example.com', passwordHash: 'hashed:Admin12345', fullName: 'Quản trị viên', role: 'admin',
     });
-    app = createApp({ dependencies, useCases: makeUseCases(dependencies), tokenService: dependencies.tokenService });
+    app = createApp({ dependencies });
     memberAgent = request.agent(app);
     adminAgent = request.agent(app);
 
