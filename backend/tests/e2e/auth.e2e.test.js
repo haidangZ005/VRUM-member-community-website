@@ -2,7 +2,7 @@ process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
 const createApp = require('../../src/main/app');
-const makeUseCases = require('../../src/main/factories/makeUseCases');
+const UnauthorizedError = require('../../src/domain/errors/UnauthorizedError');
 const { makeFakeDependencies } = require('../helpers/fakes');
 
 describe('Auth & profile API', () => {
@@ -11,7 +11,7 @@ describe('Auth & profile API', () => {
 
   beforeEach(() => {
     const dependencies = makeFakeDependencies();
-    app = createApp({ dependencies, useCases: makeUseCases(dependencies), tokenService: dependencies.tokenService });
+    app = createApp({ dependencies });
     agent = request.agent(app);
   });
 
@@ -41,6 +41,19 @@ describe('Auth & profile API', () => {
   test('validate input và bảo vệ profile', async () => {
     await request(app).post('/api/auth/register').send({ username: 'x', email: 'sai', password: '123' }).expect(422);
     await request(app).get('/api/users/me').expect(401);
+  });
+
+  test.each([
+    [new UnauthorizedError('Thông tin xác thực không hợp lệ'), 401, 'UNAUTHORIZED', 'Thông tin xác thực không hợp lệ'],
+    [new Error('Private internal details'), 500, 'INTERNAL_ERROR', 'Đã có lỗi xảy ra'],
+  ])('chuyển lỗi Promise tới errorHandler: %s', async (error, status, code, message) => {
+    const failingApp = createApp({
+      dependencies: makeFakeDependencies(),
+      useCases: { loginUser: { execute: jest.fn().mockRejectedValue(error) } },
+    });
+    await request(failingApp).post('/api/auth/login')
+      .send({ email: 'dang@example.com', password: 'Matkhau123' }).expect(status)
+      .expect(({ body }) => expect(body).toEqual({ error: { code, message } }));
   });
 
   test('quên và đặt lại mật khẩu không làm lộ email', async () => {
