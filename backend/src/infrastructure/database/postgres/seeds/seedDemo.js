@@ -2,23 +2,18 @@ const pool = require('../connection');
 const env = require('../../../config/env');
 const BcryptHashService = require('../../../services/BcryptHashService');
 
-const avatar = (fullName, color) => {
-  const initials = fullName.split(' ').filter(Boolean).map((part) => part[0]).slice(-2).join('').toUpperCase();
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#${color}"/><circle cx="49" cy="15" r="13" fill="#fff" opacity=".2"/><text x="32" y="41" text-anchor="middle" font-family="Arial,sans-serif" font-size="23" font-weight="700" fill="white">${initials}</text></svg>`;
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-};
 const members = [
-  ['minh_anh', 'minhanh@example.com', 'Nguyễn Minh Anh', 'f97316'],
-  ['quang_huy', 'quanghuy@example.com', 'Trần Quang Huy', '2563eb'],
-  ['thu_trang', 'thutrang@example.com', 'Lê Thu Trang', 'db2777'],
-  ['lan_phuong', 'lanphuong@example.com', 'Phạm Lan Phương', '9333ea'],
-  ['duc_long', 'duclong@example.com', 'Vũ Đức Long', '0891b2'],
-  ['hai_yen', 'haiyen@example.com', 'Đỗ Hải Yến', '059669'],
-  ['bao_ngoc', 'baongoc@example.com', 'Hoàng Bảo Ngọc', 'dc2626'],
-  ['gia_bao', 'giabao@example.com', 'Ngô Gia Bảo', 'ca8a04'],
-  ['khanh_linh', 'khanhlinh@example.com', 'Bùi Khánh Linh', '4f46e5'],
-  ['tuan_kiet', 'tuankiet@example.com', 'Đặng Tuấn Kiệt', '0f766e'],
-].map(([username, email, fullName, color]) => ({ username, email, fullName, avatarUrl: avatar(fullName, color) }));
+  ['minh_anh', 'minhanh@example.com', 'Nguyễn Minh Anh'],
+  ['quang_huy', 'quanghuy@example.com', 'Trần Quang Huy'],
+  ['thu_trang', 'thutrang@example.com', 'Lê Thu Trang'],
+  ['lan_phuong', 'lanphuong@example.com', 'Phạm Lan Phương'],
+  ['duc_long', 'duclong@example.com', 'Vũ Đức Long'],
+  ['hai_yen', 'haiyen@example.com', 'Đỗ Hải Yến'],
+  ['bao_ngoc', 'baongoc@example.com', 'Hoàng Bảo Ngọc'],
+  ['gia_bao', 'giabao@example.com', 'Ngô Gia Bảo'],
+  ['khanh_linh', 'khanhlinh@example.com', 'Bùi Khánh Linh'],
+  ['tuan_kiet', 'tuankiet@example.com', 'Đặng Tuấn Kiệt'],
+].map(([username, email, fullName]) => ({ username, email, fullName, avatarUrl: `/demo-avatars/${username}.svg` }));
 
 const demoJpeg = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAASACADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD0uiiivwc/qgKKKKACiiigAooooA//2Q==';
 const categories = [
