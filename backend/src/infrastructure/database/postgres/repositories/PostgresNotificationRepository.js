@@ -22,7 +22,7 @@ class PostgresNotificationRepository {
     const ordinaryActivity = ['POST_COMMENT', 'COMMENT_REPLY', 'MENTION', 'POST_VOTE_MILESTONE'].includes(notification.type);
     const { rows } = await database.query(
       `INSERT INTO notifications (recipient_id, actor_id, type, entity_type, entity_id, payload, dedupe_key)
-       SELECT $1, $2, $3, $4, $5, $6::jsonb, $7
+       SELECT $1, $2, $3::varchar, $4, $5, $6::jsonb, $7
        WHERE ($3 = 'CONTENT_MODERATED' OR COALESCE((SELECT in_app_enabled FROM notification_preferences WHERE user_id = $1 AND type = $3), TRUE))
          AND (NOT $8::boolean OR $9::uuid IS NULL OR NOT EXISTS (
            SELECT 1 FROM muted_communities WHERE user_id = $1 AND category_id = $9
