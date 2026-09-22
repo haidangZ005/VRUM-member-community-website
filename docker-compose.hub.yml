@@ -1,0 +1,5 @@
+services:
+  backend:
+    image: dwng/vrum:backend-2907f48-patch1
+  frontend:
+    image: dwng/vrum:frontend-2907f48
